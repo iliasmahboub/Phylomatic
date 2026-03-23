@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -26,16 +27,34 @@ class BlastHit:
     length: int
 
 
+# Map user-facing DB names to BLAST URL API parameters.
+# The URL API doesn't support "16S_ribosomal_RNA" directly —
+# use nt with an Entrez query filter instead.
+DB_CONFIG: dict[str, dict[str, str]] = {
+    "16S_ribosomal_RNA": {
+        "DATABASE": "nt",
+        "ENTREZ_QUERY": "16S ribosomal RNA[Title] AND bacteria[Organism]",
+    },
+    "ITS_RefSeq_Fungi": {
+        "DATABASE": "nt",
+        "ENTREZ_QUERY": "internal transcribed spacer[Title] AND fungi[Organism]",
+    },
+    "nt": {"DATABASE": "nt"},
+    "refseq_rna": {"DATABASE": "refseq_rna"},
+}
+
+
 async def _submit_blast(client: httpx.AsyncClient, fasta: str, email: str, database: str = "16S_ribosomal_RNA") -> str:
     """Submit a BLASTn job and return the RID."""
-    params = {
+    db_conf = DB_CONFIG.get(database, {"DATABASE": "nt"})
+    params: dict[str, str] = {
         "CMD": "Put",
         "PROGRAM": "blastn",
-        "DATABASE": database,
         "QUERY": fasta,
         "FORMAT_TYPE": "XML",
         "HITLIST_SIZE": str(DEFAULT_HITLIST_SIZE),
         "email": email,
+        **db_conf,
     }
 
     for attempt in range(MAX_RETRIES):
@@ -43,11 +62,10 @@ async def _submit_blast(client: httpx.AsyncClient, fasta: str, email: str, datab
             resp = await client.post(BLAST_URL, data=params, timeout=60.0)
             resp.raise_for_status()
             text = resp.text
-            # Extract RID from response
-            for line in text.split("\n"):
-                if line.strip().startswith("RID"):
-                    rid = line.split("=")[1].strip()
-                    return rid
+            # Extract RID from response (plain-text line: "    RID = XXXXXXXXX")
+            match = re.search(r"^\s*RID\s*=\s*(\S+)", text, re.MULTILINE)
+            if match:
+                return match.group(1)
             raise ValueError("RID not found in BLAST submission response")
         except (httpx.HTTPError, ValueError) as exc:
             if attempt == MAX_RETRIES - 1:
