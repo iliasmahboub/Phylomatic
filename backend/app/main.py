@@ -42,6 +42,7 @@ async def run_pipeline(
     fwd: UploadFile = File(...),
     rev: UploadFile = File(...),
     ncbi_email: str = Form(...),
+    blast_db: str = Form("16S_ribosomal_RNA"),
 ) -> dict[str, str]:
     try:
         tmp = tempfile.mkdtemp()
@@ -55,7 +56,7 @@ async def run_pipeline(
         with open(rev_path, "wb") as f:
             f.write(await rev.read())
 
-        job = create_job(fwd_path, rev_path, ncbi_email)
+        job = create_job(fwd_path, rev_path, ncbi_email, blast_db)
         asyncio.create_task(execute_pipeline(job))
         return {"job_id": job.job_id}
     except Exception as exc:

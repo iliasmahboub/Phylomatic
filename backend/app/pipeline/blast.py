@@ -26,12 +26,12 @@ class BlastHit:
     length: int
 
 
-async def _submit_blast(client: httpx.AsyncClient, fasta: str, email: str) -> str:
+async def _submit_blast(client: httpx.AsyncClient, fasta: str, email: str, database: str = "16S_ribosomal_RNA") -> str:
     """Submit a BLASTn job and return the RID."""
     params = {
         "CMD": "Put",
         "PROGRAM": "blastn",
-        "DATABASE": "16S_ribosomal_RNA",
+        "DATABASE": database,
         "QUERY": fasta,
         "FORMAT_TYPE": "XML",
         "HITLIST_SIZE": str(DEFAULT_HITLIST_SIZE),
@@ -131,7 +131,7 @@ def _parse_blast_xml(xml_text: str, query_length: int) -> list[BlastHit]:
 
 
 async def blast_search(
-    fasta: str, hitlist_size: int = DEFAULT_HITLIST_SIZE
+    fasta: str, hitlist_size: int = DEFAULT_HITLIST_SIZE, database: str = "16S_ribosomal_RNA"
 ) -> list[BlastHit]:
     """Run a full BLASTn search: submit, poll, parse."""
     email = os.environ.get("NCBI_EMAIL", "")
@@ -144,7 +144,7 @@ async def blast_search(
     query_length = len("".join(seq_lines))
 
     async with httpx.AsyncClient() as client:
-        rid = await _submit_blast(client, fasta, email)
+        rid = await _submit_blast(client, fasta, email, database)
         xml_text = await _poll_blast(client, rid, email)
         hits = _parse_blast_xml(xml_text, query_length)
 

@@ -9,6 +9,7 @@ import SequenceViewer from "./components/SequenceViewer";
 
 function App() {
   const [email, setEmail] = useState("");
+  const [blastDb, setBlastDb] = useState("16S_ribosomal_RNA");
   const [files, setFiles] = useState<{ fwd: File; rev: File } | null>(null);
   const pipeline = usePipeline();
 
@@ -18,7 +19,7 @@ function App() {
 
   const handleRun = () => {
     if (!files || !email) return;
-    pipeline.run(files.fwd, files.rev, email);
+    pipeline.run(files.fwd, files.rev, email, blastDb);
   };
 
   const handleReset = () => {
@@ -90,6 +91,29 @@ function App() {
                 />
                 <p className="text-xs text-gray-400 mt-1.5">
                   Required by NCBI for API access — no signup needed.
+                </p>
+              </div>
+
+              <div className="pt-2">
+                <label
+                  htmlFor="blast-db"
+                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                >
+                  BLAST Database
+                </label>
+                <select
+                  id="blast-db"
+                  value={blastDb}
+                  onChange={(e) => setBlastDb(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all appearance-none"
+                >
+                  <option value="16S_ribosomal_RNA">16S ribosomal RNA (species ID)</option>
+                  <option value="nt">Nucleotide collection (nt)</option>
+                  <option value="refseq_rna">RefSeq RNA</option>
+                  <option value="ITS_RefSeq_Fungi">ITS RefSeq (fungi)</option>
+                </select>
+                <p className="text-xs text-gray-400 mt-1.5">
+                  16S is best for bacterial species identification.
                 </p>
               </div>
 

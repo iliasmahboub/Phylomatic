@@ -43,19 +43,21 @@ class JobState:
     fwd_path: str = ""
     rev_path: str = ""
     ncbi_email: str = ""
+    blast_db: str = "16S_ribosomal_RNA"
 
 
 # In-memory job storage
 jobs: dict[str, JobState] = {}
 
 
-def create_job(fwd_path: str, rev_path: str, ncbi_email: str) -> JobState:
+def create_job(fwd_path: str, rev_path: str, ncbi_email: str, blast_db: str = "16S_ribosomal_RNA") -> JobState:
     job_id = uuid.uuid4().hex[:12]
     job = JobState(
         job_id=job_id,
         fwd_path=fwd_path,
         rev_path=rev_path,
         ncbi_email=ncbi_email,
+        blast_db=blast_db,
     )
     jobs[job_id] = job
     return job
@@ -81,7 +83,7 @@ async def run_pipeline(job: JobState) -> None:
 
         # 2. BLAST
         _update(job, PipelineStage.BLAST, 20, "Submitting BLAST search...")
-        hits = await blast_search(consensus_fasta)
+        hits = await blast_search(consensus_fasta, database=job.blast_db)
         _update(
             job, PipelineStage.BLAST, 45, f"BLAST complete — {len(hits)} hits found"
         )
