@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import time
 import tempfile
 from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, Form, WebSocket, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.jobs import jobs, create_job, PipelineStage, JobState
-from app.models import PipelineResult, BlastHitSchema
+from app.jobs import jobs, create_job, run_pipeline, PipelineStage
+from app.models import PipelineResult
 
 app = FastAPI(title="Phylomatic", version="0.1.0")
 
@@ -39,6 +40,7 @@ async def run_pipeline(
         f.write(await rev.read())
 
     job = create_job(fwd_path, rev_path, ncbi_email)
+    asyncio.create_task(run_pipeline(job))
     return {"job_id": job.job_id}
 
 
@@ -73,25 +75,27 @@ async def websocket_endpoint(websocket: WebSocket, job_id: str) -> None:
         await websocket.close(code=4004)
         return
 
-    import asyncio
-    while job.stage not in (PipelineStage.COMPLETE, PipelineStage.ERROR):
+    try:
+        while job.stage not in (PipelineStage.COMPLETE, PipelineStage.ERROR):
+            await websocket.send_json({
+                "stage": job.stage,
+                "status": "running",
+                "message": job.message,
+                "progress": job.progress,
+                "elapsed_seconds": round(time.time() - job.start_time, 1),
+            })
+            await asyncio.sleep(1)
+
         await websocket.send_json({
             "stage": job.stage,
-            "status": "running",
+            "status": "complete" if job.stage == PipelineStage.COMPLETE else "error",
             "message": job.message,
-            "progress": job.progress,
+            "progress": 100 if job.stage == PipelineStage.COMPLETE else job.progress,
             "elapsed_seconds": round(time.time() - job.start_time, 1),
         })
-        await asyncio.sleep(1)
-
-    await websocket.send_json({
-        "stage": job.stage,
-        "status": "complete" if job.stage == PipelineStage.COMPLETE else "error",
-        "message": job.message,
-        "progress": 100 if job.stage == PipelineStage.COMPLETE else job.progress,
-        "elapsed_seconds": round(time.time() - job.start_time, 1),
-    })
-    await websocket.close()
+        await websocket.close()
+    except WebSocketDisconnect:
+        pass
 
 
 @app.delete("/api/job/{job_id}")
