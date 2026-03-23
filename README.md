@@ -21,7 +21,7 @@ If you've done 16S identification from Sanger reads, you know the workflow: open
 
 For one sample, it's tedious. For twenty, it's a full afternoon. For a course where every student needs to do it, it's a guaranteed stream of "my BLAST timed out" and "MEGA won't open the file" emails.
 
-I built Phylomatic because I got tired of doing the same six manual steps every time I needed to identify a bacterial isolate. The entire pipeline, from raw chromatograms to a publication-ready phylogenetic tree, runs in a single click with no local tool installations beyond Python and Node.
+I built Phylomatic because I got tired of doing the same six manual steps every time I needed to identify a bacterial isolate. The entire pipeline, from raw chromatograms to a publication-ready phylogenetic tree, runs in a single click.
 
 ---
 
@@ -52,23 +52,13 @@ I built Phylomatic because I got tired of doing the same six manual steps every 
 git clone https://github.com/iliasmahboub/Phylomatic.git
 cd Phylomatic
 
-# Backend
 pip install -r backend/requirements.txt
-
-# Frontend
 cd frontend && npm install && cd ..
 
-# Create a .env file in the project root
-# NCBI_EMAIL=your@email.com
-# FRONTEND_URL=http://localhost:5173
-
-# Run
 npm run dev
 ```
 
-Open **http://localhost:5173**, drop your forward and reverse `.ab1` files, enter any email address (NCBI requires one for API access, no signup), select your database, and click **Run pipeline**.
-
-The whole process takes 2-5 minutes depending on NCBI and EBI response times.
+Open **http://localhost:5173**, drop your `.ab1` files, and click **Run pipeline**. The app asks for your email at runtime (NCBI requires one for API access, no signup needed). The whole process takes 2-5 minutes depending on NCBI/EBI response times.
 
 ---
 
@@ -104,7 +94,7 @@ The whole process takes 2-5 minutes depending on NCBI and EBI response times.
    (URL API)      (E-utilities)  (REST API)
 ```
 
-Each pipeline stage is an independent module in `backend/app/pipeline/`, importable and runnable without the web layer. The frontend connects over WebSocket for real-time progress updates during the run.
+Each pipeline stage is an independent module in `backend/app/pipeline/`, importable and runnable without the web layer. The frontend connects over WebSocket for real-time progress updates.
 
 ---
 
@@ -165,16 +155,16 @@ Unit tests cover assembly, BLAST XML parsing, and tree construction. All externa
 docker compose up
 ```
 
-Starts the backend on `:8000` and frontend on `:5173`.
-
 ---
 
-## Environment
+## Citation
 
-| Variable | Required | Description |
-|---|---|---|
-| `NCBI_EMAIL` | Yes | Any email, NCBI requires it for API access, no signup |
-| `FRONTEND_URL` | No | Frontend origin for CORS (defaults to `http://localhost:5173`) |
+If you use Phylomatic in your research, please cite:
+
+```
+Mahboub, I. (2026). Phylomatic: Automated phylogenetic inference from Sanger
+sequencing data. https://github.com/iliasmahboub/Phylomatic
+```
 
 ---
 
@@ -184,7 +174,14 @@ MIT
 
 ---
 
+<div align="center">
+
 **Ilias Mahboub**
+
 Molecular Biosciences, Duke University / Duke Kunshan University
+
 Research Trainee @ Dzirasa Lab (Duke SM) · Yuan Lab (SJTU-SM) · Remy Lab
+
 im132@duke.edu
+
+</div>
