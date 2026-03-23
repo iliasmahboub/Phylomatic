@@ -89,9 +89,19 @@ async def run_pipeline(job: JobState) -> None:
         if not hits:
             raise RuntimeError("No BLAST hits returned")
 
-        # 3. Entrez fetch (top 5 for alignment)
+        # Filter out uncultured/environmental sequences for cleaner tree
+        skip_terms = ["uncultured", "environmental", "unidentified", "bacterium strain"]
+        filtered_hits = [
+            h for h in hits
+            if not any(term in h.description.lower() for term in skip_terms)
+        ]
+        # Fall back to all hits if filtering removes everything
+        if not filtered_hits:
+            filtered_hits = hits
+
+        # 3. Entrez fetch (top 10 for alignment — more species diversity)
         _update(job, PipelineStage.ENTREZ, 50, "Fetching reference sequences...")
-        top_hits = hits[:5]
+        top_hits = filtered_hits[:10]
         accessions = [h.accession for h in top_hits]
         ref_fastas = await fetch_sequences(accessions)
         _update(job, PipelineStage.ENTREZ, 60, f"Fetched {len(ref_fastas)} references")

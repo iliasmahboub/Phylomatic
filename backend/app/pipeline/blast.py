@@ -31,7 +31,7 @@ async def _submit_blast(client: httpx.AsyncClient, fasta: str, email: str) -> st
     params = {
         "CMD": "Put",
         "PROGRAM": "blastn",
-        "DATABASE": "nt",
+        "DATABASE": "16S_ribosomal_RNA",
         "QUERY": fasta,
         "FORMAT_TYPE": "XML",
         "HITLIST_SIZE": str(DEFAULT_HITLIST_SIZE),
