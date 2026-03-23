@@ -1,38 +1,37 @@
-<div align="center">
-
 # Phylomatic
 
 **Automated phylogenetic inference from Sanger sequencing data.**
 
-Drop in raw `.ab1` chromatograms. Get back a publication-ready phylogenetic tree.
+---
 
-[![CI](https://github.com/iliasmahboub/Phylomatic/actions/workflows/ci.yml/badge.svg)](https://github.com/iliasmahboub/Phylomatic/actions)
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
-[![React 18](https://img.shields.io/badge/react-18-61dafb.svg)](https://react.dev/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+## Why this exists
 
-</div>
+If you've done 16S identification from Sanger reads, you know the workflow: open your `.ab1` files in FinchTV, manually trim the low-quality ends, copy the sequence into BLAST, wait, copy the accession numbers, fetch references from Entrez one by one, paste everything into Clustal Omega, wait again, download the alignment, load it into MEGA, build a tree, export it, annotate it in Illustrator.
+
+For one sample, it's tedious. For twenty, it's a full afternoon. For a course where every student needs to do it, it's a guaranteed stream of "my BLAST timed out" and "MEGA won't open the file" emails.
+
+I built Phylomatic because I got tired of doing the same six manual steps every time I needed to identify a bacterial isolate. The entire pipeline — from raw chromatograms to a publication-ready phylogenetic tree — runs in a single click with no local tool installations beyond Python and Node.
 
 ---
 
-## How It Works
+## What it does
 
 ```
-.ab1 reads ─→ Consensus ─→ BLASTn ─→ References ─→ MSA ─→ NJ Tree ─→ SVG
-   (2 files)     FASTA      NCBI       Entrez      Clustal   BioPython   Annotated
+.ab1 reads ──> Consensus ──> BLASTn ──> References ──> MSA ──> NJ Tree ──> SVG
+  (2 files)      FASTA        NCBI       Entrez       Clustal   BioPython   Annotated
 ```
 
-1. **Assembly** — Reads forward + reverse `.ab1` chromatograms, trims low-quality ends (PHRED < 20), reverse-complements the reverse read, and builds a consensus sequence.
+1. **Assembly** — Reads forward and reverse `.ab1` chromatograms, quality-trims both ends at PHRED < 20, reverse-complements the reverse read, and builds a consensus sequence by taking the higher-quality base at each position.
 
-2. **BLAST** — Submits the consensus to NCBI BLASTn against the nucleotide database. Returns the top species matches with identity and coverage scores.
+2. **BLAST** — Submits the consensus to NCBI BLASTn. Supports multiple databases: 16S ribosomal RNA (filtered via Entrez query for proper species-level hits), the full nucleotide collection, RefSeq RNA, or ITS for fungal work. Returns the top 15 hits with identity, coverage, and E-values.
 
-3. **Reference Fetch** — Downloads full FASTA sequences for the top hits via NCBI Entrez.
+3. **Reference Fetch** — Pulls FASTA sequences for the top hits via NCBI Entrez E-utilities. Filters out uncultured/environmental sequences automatically so the tree contains real species names, not "Uncultured bacterium clone."
 
-4. **Alignment** — Aligns the consensus with references using the EBI Clustal Omega REST API.
+4. **Alignment** — Submits the consensus plus references to the EBI Clustal Omega REST API for multiple sequence alignment.
 
-5. **Tree Construction** — Builds a Neighbor-Joining phylogenetic tree from the alignment using BioPython's distance matrix calculator.
+5. **Tree Construction** — Builds a Neighbor-Joining tree from the alignment distance matrix using BioPython. Labels use genus + species names extracted from BLAST hit descriptions.
 
-6. **Visualization** — Renders the tree as an annotated SVG with the query sequence highlighted in teal.
+6. **Visualization** — Renders the tree as an annotated SVG with the query sequence highlighted. Zoomable and pannable in the browser, exportable as SVG, PNG (2x), or Newick.
 
 ---
 
@@ -42,65 +41,59 @@ Drop in raw `.ab1` chromatograms. Get back a publication-ready phylogenetic tree
 git clone https://github.com/iliasmahboub/Phylomatic.git
 cd Phylomatic
 
-# Install dependencies
+# Backend
 pip install -r backend/requirements.txt
+
+# Frontend
 cd frontend && npm install && cd ..
 
-# Set your NCBI email (no API key needed)
-echo "NCBI_EMAIL=your@email.com" > .env
-echo "FRONTEND_URL=http://localhost:5173" >> .env
+# Create a .env file in the project root
+# NCBI_EMAIL=your@email.com
+# FRONTEND_URL=http://localhost:5173
 
-# Run everything
+# Run
 npm run dev
 ```
 
-Open **http://localhost:5173**, drop your `.ab1` files, and click Run.
+Open **http://localhost:5173**, drop your forward and reverse `.ab1` files, enter any email address (NCBI requires one for API access, no signup), select your database, and click **Run pipeline**.
+
+The whole process takes 2-5 minutes depending on NCBI and EBI response times.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Frontend (React 18 + TypeScript + Vite + Tailwind)     │
-│  :5173                                                  │
-│  ┌──────────┐ ┌──────────────┐ ┌───────────────┐       │
-│  │ DropZone │ │ PipelineTrack│ │ PhyloTree     │       │
-│  │          │ │              │ │ (zoom/pan SVG)│       │
-│  └──────────┘ └──────────────┘ └───────────────┘       │
-│  ┌──────────────┐ ┌───────────┐ ┌──────────────┐       │
-│  │ BlastResults  │ │ SeqViewer │ │ ExportPanel  │       │
-│  └──────────────┘ └───────────┘ └──────────────┘       │
-└────────────────────────┬────────────────────────────────┘
-                         │ REST + WebSocket
-┌────────────────────────┴────────────────────────────────┐
-│  Backend (FastAPI + BioPython + asyncio)                 │
-│  :8000                                                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐   │
-│  │ assembly │→│  blast   │→│  entrez  │→│alignment │   │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘   │
-│  ┌──────────┐ ┌──────────┐                              │
-│  │   tree   │→│visualize │                              │
-│  └──────────┘ └──────────┘                              │
-└─────────────────────────────────────────────────────────┘
-                         │
-          ┌──────────────┼──────────────┐
-          ▼              ▼              ▼
-   NCBI BLASTn    NCBI Entrez    EBI Clustal Omega
-   (URL API)      (E-utilities)  (REST API)
+Frontend (React 18 + TypeScript + Vite + Tailwind)  :5173
+  DropZone  |  PipelineTracker  |  PhyloTree (zoom/pan)
+  BlastResults  |  SequenceViewer  |  ExportPanel
+                        |
+                   REST + WebSocket
+                        |
+Backend (FastAPI + BioPython + asyncio)  :8000
+  assembly -> blast -> entrez -> alignment -> tree -> visualize
+                        |
+          NCBI BLASTn  /  NCBI Entrez  /  EBI Clustal Omega
 ```
+
+The backend is a standard FastAPI application. Each pipeline stage is an independent module in `backend/app/pipeline/` — importable and runnable without the web layer. The frontend connects over WebSocket for real-time progress updates during the run.
 
 ---
 
-## API Endpoints
+## Running modules standalone
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/run` | Upload `.ab1` files, start pipeline |
-| `GET` | `/api/status/{job_id}` | Current stage + progress |
-| `GET` | `/api/results/{job_id}` | Full results (hits, SVG, Newick) |
-| `WS` | `/ws/{job_id}` | Real-time stage updates |
-| `DELETE` | `/api/job/{job_id}` | Clean up job |
+Each step works independently from the command line:
+
+```bash
+cd backend
+
+python -m app.pipeline.assembly fwd.ab1 rev.ab1
+python -m app.pipeline.blast consensus.fasta
+python -m app.pipeline.entrez ACC1 ACC2 ACC3
+python -m app.pipeline.alignment refs.fasta
+python -m app.pipeline.tree aligned.fasta
+python -m app.pipeline.visualize tree.nwk
+```
 
 ---
 
@@ -112,24 +105,18 @@ Open **http://localhost:5173**, drop your `.ab1` files, and click Run.
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS |
 | External APIs | NCBI BLAST URL API, NCBI Entrez E-utilities, EBI Clustal Omega REST |
 | Testing | pytest, pytest-asyncio, pytest-httpx |
-| DevOps | Docker, Docker Compose, GitHub Actions CI |
 
 ---
 
-## Running Pipeline Modules Standalone
+## API
 
-Each module is independently executable:
-
-```bash
-cd backend
-
-python -m app.pipeline.assembly fwd.ab1 rev.ab1        # → consensus FASTA
-python -m app.pipeline.blast consensus.fasta            # → top 10 hits
-python -m app.pipeline.entrez ACC1 ACC2 ACC3            # → reference FASTAs
-python -m app.pipeline.alignment refs.fasta             # → aligned FASTA
-python -m app.pipeline.tree aligned.fasta               # → Newick string
-python -m app.pipeline.visualize tree.nwk               # → tree.svg
-```
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/run` | Upload `.ab1` files, start pipeline |
+| `GET` | `/api/status/{job_id}` | Current stage and progress |
+| `GET` | `/api/results/{job_id}` | Full results (hits, SVG, Newick) |
+| `WS` | `/ws/{job_id}` | Real-time stage updates |
+| `DELETE` | `/api/job/{job_id}` | Clean up job data |
 
 ---
 
@@ -140,7 +127,7 @@ cd backend
 pytest tests/ -v
 ```
 
-19 unit tests covering assembly, BLAST parsing, and tree construction. External API calls are mocked in unit tests.
+Unit tests cover assembly, BLAST XML parsing, and tree construction. All external API calls are mocked.
 
 ---
 
@@ -150,19 +137,26 @@ pytest tests/ -v
 docker compose up
 ```
 
-Starts both backend (:8000) and frontend (:5173).
+Starts the backend on `:8000` and frontend on `:5173`.
 
 ---
 
-## Environment Variables
+## Environment
 
 | Variable | Required | Description |
 |---|---|---|
-| `NCBI_EMAIL` | Yes | Your email for NCBI API access (no signup) |
-| `FRONTEND_URL` | No | Frontend origin for CORS (default: `http://localhost:5173`) |
+| `NCBI_EMAIL` | Yes | Any email — NCBI requires it for API access, no signup |
+| `FRONTEND_URL` | No | Frontend origin for CORS (defaults to `http://localhost:5173`) |
 
 ---
 
 ## License
 
 MIT
+
+---
+
+**Ilias Mahboub**
+Molecular Biosciences — Duke University / Duke Kunshan University
+Research Trainee @ Dzirasa Lab (Duke SM) · Yuan Lab (SJTU-SM) · Remy Lab
+im132@duke.edu
