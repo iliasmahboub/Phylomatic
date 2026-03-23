@@ -1,0 +1,7 @@
+{
+  "name": "phylomatic",
+  "private": true,
+  "scripts": {
+    "dev": "npx concurrently -n api,web -c green,cyan \"cd backend && uvicorn app.main:app --reload\" \"cd frontend && npm run dev\""
+  }
+}
