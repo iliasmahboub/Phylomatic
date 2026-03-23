@@ -11,5 +11,6 @@ frontend/dist/
 .vite/
 *.svg
 *.png
+!docs/*.png
 venv/
 .venv/

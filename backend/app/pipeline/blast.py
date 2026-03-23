@@ -44,7 +44,12 @@ DB_CONFIG: dict[str, dict[str, str]] = {
 }
 
 
-async def _submit_blast(client: httpx.AsyncClient, fasta: str, email: str, database: str = "16S_ribosomal_RNA") -> str:
+async def _submit_blast(
+    client: httpx.AsyncClient,
+    fasta: str,
+    email: str,
+    database: str = "16S_ribosomal_RNA",
+) -> str:
     """Submit a BLASTn job and return the RID."""
     db_conf = DB_CONFIG.get(database, {"DATABASE": "nt"})
     params: dict[str, str] = {
@@ -149,7 +154,9 @@ def _parse_blast_xml(xml_text: str, query_length: int) -> list[BlastHit]:
 
 
 async def blast_search(
-    fasta: str, hitlist_size: int = DEFAULT_HITLIST_SIZE, database: str = "16S_ribosomal_RNA"
+    fasta: str,
+    hitlist_size: int = DEFAULT_HITLIST_SIZE,
+    database: str = "16S_ribosomal_RNA",
 ) -> list[BlastHit]:
     """Run a full BLASTn search: submit, poll, parse."""
     email = os.environ.get("NCBI_EMAIL", "")

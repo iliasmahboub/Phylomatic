@@ -23,6 +23,12 @@ For one sample, it's tedious. For twenty, it's a full afternoon. For a course wh
 
 I built Phylomatic because I got tired of doing the same six manual steps every time I needed to identify a bacterial isolate. The entire pipeline, from raw chromatograms to a publication-ready phylogenetic tree, runs in a single click.
 
+<div align="center">
+<img src="docs/screenshot-results.png" alt="Phylomatic results view showing phylogenetic tree, top match, and export options" width="100%" />
+<br/><br/>
+<img src="docs/screenshot-blast.png" alt="Consensus sequence viewer and BLAST hits table" width="100%" />
+</div>
+
 ---
 
 ## What it does

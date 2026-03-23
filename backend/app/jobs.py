@@ -50,7 +50,9 @@ class JobState:
 jobs: dict[str, JobState] = {}
 
 
-def create_job(fwd_path: str, rev_path: str, ncbi_email: str, blast_db: str = "16S_ribosomal_RNA") -> JobState:
+def create_job(
+    fwd_path: str, rev_path: str, ncbi_email: str, blast_db: str = "16S_ribosomal_RNA"
+) -> JobState:
     job_id = uuid.uuid4().hex[:12]
     job = JobState(
         job_id=job_id,
@@ -94,7 +96,8 @@ async def run_pipeline(job: JobState) -> None:
         # Filter out uncultured/environmental sequences for cleaner tree
         skip_terms = ["uncultured", "environmental", "unidentified", "bacterium strain"]
         filtered_hits = [
-            h for h in hits
+            h
+            for h in hits
             if not any(term in h.description.lower() for term in skip_terms)
         ]
         # Fall back to all hits if filtering removes everything
