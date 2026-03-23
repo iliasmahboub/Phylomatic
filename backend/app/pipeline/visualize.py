@@ -41,7 +41,9 @@ def render_tree(newick: str, top_hit: BlastHit | None = None) -> str:
         tree,
         axes=ax,
         do_show=False,
-        label_func=lambda c: c.name or "",
+        label_func=lambda c: (
+            c.name if c.name and not c.name.startswith("Inner") else ""
+        ),
         label_colors=lambda name: (
             QUERY_COLOR if name and "Query" in name else DEFAULT_COLOR
         ),

@@ -123,7 +123,8 @@ async def run_pipeline(job: JobState) -> None:
 
         # 6. Visualize
         _update(job, PipelineStage.VISUALIZE, 90, "Rendering tree SVG...")
-        top_hit = hits[0]
+        # Top hit by identity, not BLAST return order
+        top_hit = max(hits, key=lambda h: h.identity_pct)
         svg = render_tree(newick, top_hit)
         _update(job, PipelineStage.VISUALIZE, 98, "Visualization complete")
 
