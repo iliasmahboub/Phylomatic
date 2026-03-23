@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import time
 import tempfile
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import (
     FastAPI,
     UploadFile,
@@ -21,6 +23,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.jobs import jobs, create_job, run_pipeline as execute_pipeline, PipelineStage
 from app.models import PipelineResult
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent.parent / ".env")
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Phylomatic", version="0.1.0")
 
@@ -38,18 +43,24 @@ async def run_pipeline(
     rev: UploadFile = File(...),
     ncbi_email: str = Form(...),
 ) -> dict[str, str]:
-    tmp = tempfile.mkdtemp()
-    fwd_path = str(Path(tmp) / fwd.filename)
-    rev_path = str(Path(tmp) / rev.filename)
+    try:
+        tmp = tempfile.mkdtemp()
+        fwd_name = fwd.filename or "forward.ab1"
+        rev_name = rev.filename or "reverse.ab1"
+        fwd_path = str(Path(tmp) / fwd_name)
+        rev_path = str(Path(tmp) / rev_name)
 
-    with open(fwd_path, "wb") as f:
-        f.write(await fwd.read())
-    with open(rev_path, "wb") as f:
-        f.write(await rev.read())
+        with open(fwd_path, "wb") as f:
+            f.write(await fwd.read())
+        with open(rev_path, "wb") as f:
+            f.write(await rev.read())
 
-    job = create_job(fwd_path, rev_path, ncbi_email)
-    asyncio.create_task(execute_pipeline(job))
-    return {"job_id": job.job_id}
+        job = create_job(fwd_path, rev_path, ncbi_email)
+        asyncio.create_task(execute_pipeline(job))
+        return {"job_id": job.job_id}
+    except Exception as exc:
+        logger.exception("Failed to start pipeline")
+        raise HTTPException(500, str(exc)) from exc
 
 
 @app.get("/api/status/{job_id}")
