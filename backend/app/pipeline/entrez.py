@@ -10,7 +10,6 @@ import httpx
 from Bio import SeqIO
 from io import StringIO
 
-
 EFETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 BATCH_SIZE = 5
 BATCH_DELAY_S = 1.0

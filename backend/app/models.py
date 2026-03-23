@@ -6,7 +6,9 @@ from pydantic import BaseModel
 class RunRequest(BaseModel):
     ncbi_email: str
 
-    model_config = {"json_schema_extra": {"examples": [{"ncbi_email": "user@example.com"}]}}
+    model_config = {
+        "json_schema_extra": {"examples": [{"ncbi_email": "user@example.com"}]}
+    }
 
 
 class BlastHitSchema(BaseModel):

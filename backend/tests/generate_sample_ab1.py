@@ -1,8 +1,6 @@
 """Generate synthetic .ab1 files for testing using BioPython."""
 
 from pathlib import Path
-from Bio.SeqRecord import SeqRecord
-from Bio.Seq import Seq
 
 SAMPLE_DIR = Path(__file__).parent / "sample_data"
 

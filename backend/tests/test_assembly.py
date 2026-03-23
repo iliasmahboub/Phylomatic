@@ -1,9 +1,6 @@
 """Tests for the assembly module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
-from Bio.SeqRecord import SeqRecord
-from Bio.Seq import Seq
 
 from app.pipeline.assembly import (
     _trim_by_quality,

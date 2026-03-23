@@ -42,6 +42,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     from pathlib import Path
+
     aligned = Path(sys.argv[1]).read_text()
     newick = build_tree(aligned)
     print(newick)

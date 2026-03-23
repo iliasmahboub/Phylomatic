@@ -8,14 +8,15 @@ import sys
 
 import httpx
 
-
 CLUSTALO_RUN_URL = "https://www.ebi.ac.uk/Tools/services/rest/clustalo/run"
 CLUSTALO_STATUS_URL = "https://www.ebi.ac.uk/Tools/services/rest/clustalo/status"
 CLUSTALO_RESULT_URL = "https://www.ebi.ac.uk/Tools/services/rest/clustalo/result"
 POLL_INTERVAL_S = 5
 
 
-async def _submit_alignment(client: httpx.AsyncClient, multi_fasta: str, email: str) -> str:
+async def _submit_alignment(
+    client: httpx.AsyncClient, multi_fasta: str, email: str
+) -> str:
     """Submit a Clustal Omega job, return job ID."""
     data = {
         "email": email,
@@ -41,7 +42,9 @@ async def _poll_status(client: httpx.AsyncClient, job_id: str) -> None:
         if status == "FINISHED":
             return
         if status in ("ERROR", "FAILURE", "NOT_FOUND"):
-            raise RuntimeError(f"Clustal Omega job {job_id} failed with status: {status}")
+            raise RuntimeError(
+                f"Clustal Omega job {job_id} failed with status: {status}"
+            )
 
 
 async def _fetch_result(client: httpx.AsyncClient, job_id: str) -> str:

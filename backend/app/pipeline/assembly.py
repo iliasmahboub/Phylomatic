@@ -4,13 +4,10 @@ from __future__ import annotations
 
 import sys
 from io import StringIO
-from pathlib import Path
 
 from Bio import SeqIO
-from Bio.Align import PairwiseAligner
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-
 
 PHRED_CUTOFF = 20
 
@@ -19,13 +16,13 @@ def _read_ab1(path: str) -> tuple[str, list[int]]:
     """Read an .ab1 file and return (sequence_string, quality_scores)."""
     record = SeqIO.read(path, "abi")
     seq = str(record.seq)
-    quals = record.letter_annotations.get(
-        "phred_quality", [0] * len(seq)
-    )
+    quals = record.letter_annotations.get("phred_quality", [0] * len(seq))
     return seq, quals
 
 
-def _trim_by_quality(seq: str, quals: list[int], cutoff: int = PHRED_CUTOFF) -> tuple[str, list[int]]:
+def _trim_by_quality(
+    seq: str, quals: list[int], cutoff: int = PHRED_CUTOFF
+) -> tuple[str, list[int]]:
     """Trim low-quality bases from both ends using a sliding-window PHRED cutoff."""
     start = 0
     end = len(seq)
@@ -58,49 +55,6 @@ def _build_consensus(
     rev_quals: list[int],
 ) -> str:
     """Align fwd and rev-complemented reads, pick higher-quality base at each position."""
-    aligner = PairwiseAligner()
-    aligner.mode = "global"
-    aligner.match_score = 2
-    aligner.mismatch_score = -1
-    aligner.open_gap_score = -5
-    aligner.extend_gap_score = -1
-
-    alignments = aligner.align(fwd_seq, rev_seq)
-    if not alignments:
-        return fwd_seq
-
-    best = alignments[0]
-
-    aligned_fwd = ""
-    aligned_rev = ""
-    # Use the aligned sequences from the alignment object
-    aligned_seqs = best.aligned
-
-    # Build full aligned strings with gaps
-    fwd_aligned_chars: list[str] = []
-    rev_aligned_chars: list[str] = []
-
-    fwd_idx = 0
-    rev_idx = 0
-    fwd_intervals = aligned_seqs[0]
-    rev_intervals = aligned_seqs[1]
-
-    # Reconstruct alignment from intervals
-    consensus_chars: list[str] = []
-
-    # Simple approach: use the alignment to get the aligned sequences
-    # by iterating through the alignment
-    try:
-        # BioPython >= 1.80 alignment format
-        fwd_line = str(best).split("\n")[0] if "\n" in str(best) else fwd_seq
-        rev_line = str(best).split("\n")[2] if "\n" in str(best) else rev_seq
-    except (IndexError, AttributeError):
-        fwd_line = fwd_seq
-        rev_line = rev_seq
-
-    # Fallback: position-by-position consensus using original sequences
-    # Map aligned positions back to original quality scores
-    min_len = min(len(fwd_seq), len(rev_seq))
     max_len = max(len(fwd_seq), len(rev_seq))
 
     consensus: list[str] = []

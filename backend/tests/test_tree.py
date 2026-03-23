@@ -1,10 +1,8 @@
 """Tests for the tree construction module."""
 
-import pytest
 from pathlib import Path
 
 from app.pipeline.tree import build_tree
-
 
 SAMPLE_DATA = Path(__file__).parent / "sample_data"
 

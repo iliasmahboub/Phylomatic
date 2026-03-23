@@ -10,7 +10,6 @@ from dataclasses import dataclass
 
 import httpx
 
-
 BLAST_URL = "https://blast.ncbi.nlm.nih.gov/blast/Blast.cgi"
 DEFAULT_HITLIST_SIZE = 10
 POLL_INTERVAL_S = 10
@@ -52,7 +51,9 @@ async def _submit_blast(client: httpx.AsyncClient, fasta: str, email: str) -> st
             raise ValueError("RID not found in BLAST submission response")
         except (httpx.HTTPError, ValueError) as exc:
             if attempt == MAX_RETRIES - 1:
-                raise RuntimeError(f"BLAST submission failed after {MAX_RETRIES} retries: {exc}") from exc
+                raise RuntimeError(
+                    f"BLAST submission failed after {MAX_RETRIES} retries: {exc}"
+                ) from exc
             wait = 2 ** (attempt + 1)
             await asyncio.sleep(wait)
 
@@ -109,21 +110,29 @@ def _parse_blast_xml(xml_text: str, query_length: int) -> list[BlastHit]:
         query_to = int(hsp.findtext("Hsp_query-to", "1"))
 
         identity_pct = round((identity / align_len) * 100, 2) if align_len else 0.0
-        coverage_pct = round(((query_to - query_from + 1) / query_length) * 100, 2) if query_length else 0.0
+        coverage_pct = (
+            round(((query_to - query_from + 1) / query_length) * 100, 2)
+            if query_length
+            else 0.0
+        )
 
-        hits.append(BlastHit(
-            accession=accession,
-            description=description,
-            identity_pct=identity_pct,
-            coverage_pct=coverage_pct,
-            e_value=e_value,
-            length=align_len,
-        ))
+        hits.append(
+            BlastHit(
+                accession=accession,
+                description=description,
+                identity_pct=identity_pct,
+                coverage_pct=coverage_pct,
+                e_value=e_value,
+                length=align_len,
+            )
+        )
 
     return hits
 
 
-async def blast_search(fasta: str, hitlist_size: int = DEFAULT_HITLIST_SIZE) -> list[BlastHit]:
+async def blast_search(
+    fasta: str, hitlist_size: int = DEFAULT_HITLIST_SIZE
+) -> list[BlastHit]:
     """Run a full BLASTn search: submit, poll, parse."""
     email = os.environ.get("NCBI_EMAIL", "")
     if not email:
@@ -131,7 +140,7 @@ async def blast_search(fasta: str, hitlist_size: int = DEFAULT_HITLIST_SIZE) -> 
 
     # Extract query length from FASTA
     lines = fasta.strip().split("\n")
-    seq_lines = [l for l in lines if not l.startswith(">")]
+    seq_lines = [line for line in lines if not line.startswith(">")]
     query_length = len("".join(seq_lines))
 
     async with httpx.AsyncClient() as client:
@@ -148,10 +157,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     from pathlib import Path
+
     fasta_content = Path(sys.argv[1]).read_text()
 
     hits = asyncio.run(blast_search(fasta_content))
     for i, h in enumerate(hits, 1):
-        print(f"{i}. {h.accession} | {h.description[:60]} | "
-              f"Identity: {h.identity_pct}% | Coverage: {h.coverage_pct}% | "
-              f"E-value: {h.e_value}")
+        print(
+            f"{i}. {h.accession} | {h.description[:60]} | "
+            f"Identity: {h.identity_pct}% | Coverage: {h.coverage_pct}% | "
+            f"E-value: {h.e_value}"
+        )

@@ -1,10 +1,9 @@
 """Tests for the BLAST module."""
 
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 
-from app.pipeline.blast import _parse_blast_xml, blast_search, BlastHit
-
+from app.pipeline.blast import _parse_blast_xml, blast_search
 
 SAMPLE_BLAST_XML = """<?xml version="1.0"?>
 <BlastOutput>

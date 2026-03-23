@@ -6,12 +6,12 @@ import sys
 from io import BytesIO, StringIO
 
 import matplotlib
+
 matplotlib.use("svg")
 import matplotlib.pyplot as plt
 from Bio import Phylo
 
 from app.pipeline.blast import BlastHit
-
 
 QUERY_COLOR = "#1D9E75"
 DEFAULT_COLOR = "#666666"
@@ -42,7 +42,9 @@ def render_tree(newick: str, top_hit: BlastHit | None = None) -> str:
         axes=ax,
         do_show=False,
         label_func=lambda c: c.name or "",
-        label_colors=lambda name: QUERY_COLOR if name and "Query" in name else DEFAULT_COLOR,
+        label_colors=lambda name: (
+            QUERY_COLOR if name and "Query" in name else DEFAULT_COLOR
+        ),
     )
 
     ax.set_title("Phylogenetic Tree", fontsize=14, fontweight="bold")
@@ -69,6 +71,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     from pathlib import Path
+
     newick_str = Path(sys.argv[1]).read_text().strip()
     svg = render_tree(newick_str)
 

@@ -13,7 +13,7 @@ from typing import Any
 from Bio import SeqIO
 
 from app.pipeline.assembly import assemble
-from app.pipeline.blast import blast_search, BlastHit
+from app.pipeline.blast import blast_search
 from app.pipeline.entrez import fetch_sequences
 from app.pipeline.alignment import align_sequences
 from app.pipeline.tree import build_tree
@@ -73,14 +73,18 @@ async def run_pipeline(job: JobState) -> None:
         os.environ["NCBI_EMAIL"] = job.ncbi_email
 
         # 1. Assembly
-        _update(job, PipelineStage.ASSEMBLY, 5, "Assembling consensus from .ab1 reads...")
+        _update(
+            job, PipelineStage.ASSEMBLY, 5, "Assembling consensus from .ab1 reads..."
+        )
         consensus_fasta = assemble(job.fwd_path, job.rev_path)
         _update(job, PipelineStage.ASSEMBLY, 15, "Assembly complete")
 
         # 2. BLAST
         _update(job, PipelineStage.BLAST, 20, "Submitting BLAST search...")
         hits = await blast_search(consensus_fasta)
-        _update(job, PipelineStage.BLAST, 45, f"BLAST complete — {len(hits)} hits found")
+        _update(
+            job, PipelineStage.BLAST, 45, f"BLAST complete — {len(hits)} hits found"
+        )
 
         if not hits:
             raise RuntimeError("No BLAST hits returned")
