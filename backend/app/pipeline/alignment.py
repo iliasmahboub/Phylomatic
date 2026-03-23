@@ -12,6 +12,7 @@ CLUSTALO_RUN_URL = "https://www.ebi.ac.uk/Tools/services/rest/clustalo/run"
 CLUSTALO_STATUS_URL = "https://www.ebi.ac.uk/Tools/services/rest/clustalo/status"
 CLUSTALO_RESULT_URL = "https://www.ebi.ac.uk/Tools/services/rest/clustalo/result"
 POLL_INTERVAL_S = 5
+MAX_POLL_ATTEMPTS = 60  # 5 minutes max
 
 
 async def _submit_alignment(
@@ -21,7 +22,7 @@ async def _submit_alignment(
     data = {
         "email": email,
         "sequence": multi_fasta,
-        "outfmt": "clustal_num",
+        "outfmt": "fa",
         "stype": "dna",
     }
 
@@ -36,11 +37,14 @@ async def _submit_alignment(
 
 async def _poll_status(client: httpx.AsyncClient, job_id: str) -> None:
     """Poll until job finishes or errors."""
-    while True:
+    for _ in range(MAX_POLL_ATTEMPTS):
         await asyncio.sleep(POLL_INTERVAL_S)
-        resp = await client.get(f"{CLUSTALO_STATUS_URL}/{job_id}", timeout=30.0)
-        resp.raise_for_status()
-        status = resp.text.strip()
+        try:
+            resp = await client.get(f"{CLUSTALO_STATUS_URL}/{job_id}", timeout=60.0)
+            resp.raise_for_status()
+            status = resp.text.strip()
+        except httpx.ReadTimeout:
+            continue
 
         if status == "FINISHED":
             return
@@ -49,12 +53,14 @@ async def _poll_status(client: httpx.AsyncClient, job_id: str) -> None:
                 f"Clustal Omega job {job_id} failed with status: {status}"
             )
 
+    raise RuntimeError(f"Clustal Omega job {job_id} timed out after polling")
+
 
 async def _fetch_result(client: httpx.AsyncClient, job_id: str) -> str:
     """Fetch aligned FASTA result."""
     resp = await client.get(
         f"{CLUSTALO_RESULT_URL}/{job_id}/aln-fasta",
-        timeout=30.0,
+        timeout=60.0,
     )
     resp.raise_for_status()
     return resp.text
