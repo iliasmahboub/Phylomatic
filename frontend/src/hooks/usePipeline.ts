@@ -29,8 +29,10 @@ export function usePipeline() {
     try {
       const { job_id } = await startPipeline(fwd, rev, email);
 
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/${job_id}`);
+      const wsBase = import.meta.env.DEV
+        ? "ws://localhost:8000"
+        : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`;
+      const ws = new WebSocket(`${wsBase}/ws/${job_id}`);
       wsRef.current = ws;
 
       ws.onmessage = (event) => {
