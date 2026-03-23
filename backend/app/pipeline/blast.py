@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import httpx
 
 BLAST_URL = "https://blast.ncbi.nlm.nih.gov/blast/Blast.cgi"
-DEFAULT_HITLIST_SIZE = 10
+DEFAULT_HITLIST_SIZE = 15
 POLL_INTERVAL_S = 10
 MAX_RETRIES = 3
 

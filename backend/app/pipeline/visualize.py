@@ -35,7 +35,7 @@ def render_tree(newick: str, top_hit: BlastHit | None = None) -> str:
         elif clade.name:
             clade.color = DEFAULT_COLOR
 
-    fig, ax = plt.subplots(figsize=(12, max(6, len(tree.get_terminals()) * 0.4)))
+    fig, ax = plt.subplots(figsize=(14, max(6, len(tree.get_terminals()) * 0.5)))
 
     Phylo.draw(
         tree,

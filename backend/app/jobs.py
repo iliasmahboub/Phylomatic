@@ -105,12 +105,28 @@ async def run_pipeline(job: JobState) -> None:
             sequences["Query"] = str(rec.seq)
             query_len = len(rec.seq)
             break
+        # Build accession → species name mapping from BLAST hits
+        acc_to_species: dict[str, str] = {}
+        for h in hits:
+            desc = h.description.strip()
+            # Extract genus + species (first two words of description)
+            parts = desc.split()
+            if len(parts) >= 2:
+                species_name = f"{parts[0]}_{parts[1]}"
+            else:
+                species_name = desc.replace(" ", "_")
+            # Deduplicate: append accession suffix if species name already used
+            label = species_name
+            if label in acc_to_species.values():
+                label = f"{species_name}_{h.accession.replace('.', '_')}"
+            acc_to_species[h.accession] = label
+
         # Parse each reference FASTA — truncate to 2x query length to stay under 4MB
         max_ref_len = max(query_len * 2, 2000)
         for acc, fasta_str in ref_fastas.items():
             for rec in SeqIO.parse(StringIO(fasta_str), "fasta"):
-                clean_label = acc.replace(".", "_").replace("|", "_")
-                sequences[clean_label] = str(rec.seq)[:max_ref_len]
+                label = acc_to_species.get(acc, acc.replace(".", "_"))
+                sequences[label] = str(rec.seq)[:max_ref_len]
                 break
 
         aligned_fasta = await align_sequences(sequences)
