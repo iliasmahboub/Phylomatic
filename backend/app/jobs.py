@@ -100,14 +100,17 @@ async def run_pipeline(job: JobState) -> None:
         _update(job, PipelineStage.ALIGNMENT, 65, "Submitting alignment...")
         sequences: dict[str, str] = {}
         # Parse consensus sequence string from FASTA
+        query_len = 0
         for rec in SeqIO.parse(StringIO(consensus_fasta), "fasta"):
             sequences["Query"] = str(rec.seq)
+            query_len = len(rec.seq)
             break
-        # Parse each reference FASTA — use clean alphanumeric labels
+        # Parse each reference FASTA — truncate to 2x query length to stay under 4MB
+        max_ref_len = max(query_len * 2, 2000)
         for acc, fasta_str in ref_fastas.items():
             for rec in SeqIO.parse(StringIO(fasta_str), "fasta"):
                 clean_label = acc.replace(".", "_").replace("|", "_")
-                sequences[clean_label] = str(rec.seq)
+                sequences[clean_label] = str(rec.seq)[:max_ref_len]
                 break
 
         aligned_fasta = await align_sequences(sequences)
