@@ -7,6 +7,13 @@ import PhyloTree from "./components/PhyloTree";
 import ExportPanel from "./components/ExportPanel";
 import SequenceViewer from "./components/SequenceViewer";
 
+const DB_OPTIONS = [
+  { value: "16S_ribosomal_RNA", label: "16S Ribosomal RNA", hint: "Bacterial species identification" },
+  { value: "nt", label: "Nucleotide (nt)", hint: "Full NCBI nucleotide collection" },
+  { value: "refseq_rna", label: "RefSeq RNA", hint: "Curated reference sequences" },
+  { value: "ITS_RefSeq_Fungi", label: "ITS RefSeq", hint: "Fungal identification" },
+];
+
 function App() {
   const [email, setEmail] = useState("");
   const [blastDb, setBlastDb] = useState("16S_ribosomal_RNA");
@@ -30,55 +37,53 @@ function App() {
   const isRunning = pipeline.status === "running";
   const isComplete = pipeline.status === "complete";
   const hasError = pipeline.status === "error";
+  const canRun = files && email.includes("@");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50/30">
+    <div className="min-h-screen bg-surface-1">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-gray-200/50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center shadow-md shadow-teal-500/20">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+      <header className="sticky top-0 z-50 bg-surface-0/80 backdrop-blur-lg border-b border-surface-3/60">
+        <div className="max-w-[1140px] mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M12 2v6M12 16v6M6 8l4 4-4 4M18 8l-4 4 4 4" />
               </svg>
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900 tracking-tight">Phylomatic</h1>
-              <p className="text-[11px] text-gray-400 -mt-0.5 tracking-wide uppercase">Phylogenetic Inference Engine</p>
-            </div>
+            <span className="text-[15px] font-semibold text-ink tracking-[-0.01em]">Phylomatic</span>
           </div>
-          {isComplete && (
+          {(isComplete || hasError) && (
             <button
               onClick={handleReset}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all"
+              className="h-8 px-3.5 text-[13px] font-medium text-ink-secondary bg-surface-0 border border-surface-3 rounded-lg hover:bg-surface-1 hover:border-surface-4 transition-all"
             >
-              New Analysis
+              New analysis
             </button>
           )}
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-10">
-        {/* Upload + Config */}
+      <main className="max-w-[1140px] mx-auto px-6 pt-10 pb-20">
+        {/* ==================== UPLOAD STATE ==================== */}
         {!isRunning && !isComplete && !hasError && (
-          <div className="animate-fade-in max-w-2xl mx-auto space-y-6">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
-                Identify your species
+          <div className="animate-fade-up max-w-[520px] mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-[22px] font-semibold text-ink tracking-[-0.02em]">
+                Phylogenetic analysis
               </h2>
-              <p className="text-gray-500 mt-2 text-lg">
-                Drop your Sanger sequencing files and get a publication-ready phylogenetic tree.
+              <p className="text-ink-secondary text-[15px] mt-1.5">
+                Upload Sanger sequencing reads to identify species and build a tree.
               </p>
             </div>
 
-            <div className="glass rounded-2xl p-8 space-y-6">
+            <div className="bg-surface-0 rounded-2xl border border-surface-3/80 shadow-card p-6 space-y-5">
               <DropZone onFilesReady={onFilesReady} disabled={isRunning} />
 
-              <div className="pt-2">
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-1.5"
-                >
+              <div className="h-px bg-surface-3/60" />
+
+              {/* Email */}
+              <div>
+                <label htmlFor="email" className="block text-[13px] font-medium text-ink mb-1.5">
                   NCBI Email
                 </label>
                 <input
@@ -86,67 +91,56 @@ function App() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all"
+                  placeholder="you@university.edu"
+                  className="w-full h-10 px-3.5 bg-surface-0 border border-surface-3 rounded-lg text-[14px] text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-400 transition-all"
                 />
-                <p className="text-xs text-gray-400 mt-1.5">
-                  Required by NCBI for API access — no signup needed.
+                <p className="text-2xs text-ink-tertiary mt-1">
+                  Required by NCBI for API access. No signup needed.
                 </p>
               </div>
 
-              <div className="pt-2">
-                <label
-                  htmlFor="blast-db"
-                  className="block text-sm font-medium text-gray-700 mb-1.5"
-                >
+              {/* Database */}
+              <div>
+                <label htmlFor="blast-db" className="block text-[13px] font-medium text-ink mb-1.5">
                   BLAST Database
                 </label>
                 <select
                   id="blast-db"
                   value={blastDb}
                   onChange={(e) => setBlastDb(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all appearance-none"
+                  className="w-full h-10 px-3.5 bg-surface-0 border border-surface-3 rounded-lg text-[14px] text-ink focus:outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-400 transition-all appearance-none"
                 >
-                  <option value="16S_ribosomal_RNA">16S ribosomal RNA (species ID)</option>
-                  <option value="nt">Nucleotide collection (nt)</option>
-                  <option value="refseq_rna">RefSeq RNA</option>
-                  <option value="ITS_RefSeq_Fungi">ITS RefSeq (fungi)</option>
+                  {DB_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label} — {opt.hint}
+                    </option>
+                  ))}
                 </select>
-                <p className="text-xs text-gray-400 mt-1.5">
-                  16S is best for bacterial species identification.
-                </p>
               </div>
 
               <button
                 onClick={handleRun}
-                disabled={!files || !email}
-                className="w-full py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-teal-700 shadow-lg shadow-teal-500/25 transition-all disabled:from-gray-300 disabled:to-gray-300 disabled:shadow-none disabled:cursor-not-allowed"
+                disabled={!canRun}
+                className="w-full h-11 bg-accent-500 text-white text-[14px] font-semibold rounded-lg hover:bg-accent-600 active:bg-accent-700 transition-colors disabled:bg-surface-3 disabled:text-ink-faint disabled:cursor-not-allowed"
               >
-                Run Pipeline
+                Run pipeline
               </button>
             </div>
 
-            <div className="flex items-center justify-center gap-8 text-xs text-gray-400 pt-4">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                NCBI BLASTn
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                Clustal Omega
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                NJ Tree
-              </span>
+            <div className="flex items-center justify-center gap-6 text-2xs text-ink-faint mt-6 font-medium">
+              <span>NCBI BLASTn</span>
+              <span className="w-1 h-1 rounded-full bg-surface-4" />
+              <span>Clustal Omega</span>
+              <span className="w-1 h-1 rounded-full bg-surface-4" />
+              <span>Neighbor-Joining</span>
             </div>
           </div>
         )}
 
-        {/* Pipeline Progress */}
+        {/* ==================== RUNNING STATE ==================== */}
         {isRunning && (
-          <div className="animate-fade-in max-w-xl mx-auto">
-            <div className="glass rounded-2xl p-8">
+          <div className="animate-fade-up max-w-[480px] mx-auto">
+            <div className="bg-surface-0 rounded-2xl border border-surface-3/80 shadow-card p-6">
               <PipelineTracker
                 currentStage={pipeline.stage}
                 message={pipeline.message}
@@ -156,66 +150,77 @@ function App() {
           </div>
         )}
 
-        {/* Error */}
+        {/* ==================== ERROR STATE ==================== */}
         {hasError && (
-          <div className="animate-fade-in max-w-xl mx-auto">
-            <div className="bg-red-50/80 backdrop-blur border border-red-200/50 rounded-2xl p-8">
+          <div className="animate-fade-up max-w-[480px] mx-auto">
+            <div className="bg-surface-0 rounded-2xl border border-red-200 shadow-card p-6">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-red-500 text-sm font-bold">!</span>
+                <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                  </svg>
                 </div>
-                <div>
-                  <p className="text-red-800 font-semibold">Pipeline Error</p>
-                  <p className="text-red-600 text-sm mt-1 leading-relaxed">{pipeline.error}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-red-900">Pipeline failed</p>
+                  <p className="text-[13px] text-red-700/80 mt-1 leading-relaxed break-words">{pipeline.error}</p>
                 </div>
               </div>
               <button
                 onClick={handleReset}
-                className="mt-6 w-full py-2.5 text-sm font-medium bg-white border border-red-200 rounded-xl hover:bg-red-50 transition-all text-red-700"
+                className="mt-5 w-full h-10 text-[13px] font-medium bg-surface-0 border border-red-200 rounded-lg hover:bg-red-50 transition-colors text-red-700"
               >
-                Try Again
+                Try again
               </button>
             </div>
           </div>
         )}
 
-        {/* Results */}
+        {/* ==================== RESULTS STATE ==================== */}
         {isComplete && pipeline.results && (
-          <div className="space-y-8 animate-fade-in">
-            {/* Top hit hero */}
-            <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-8 text-white shadow-xl shadow-teal-500/20">
-              <p className="text-teal-100 text-sm font-medium uppercase tracking-wider">Top Match</p>
-              <p className="text-2xl font-bold mt-2 leading-tight">
-                {pipeline.results.top_hit.description}
-              </p>
-              <div className="flex flex-wrap gap-x-8 gap-y-2 mt-4 text-sm">
-                <div>
-                  <span className="text-teal-200">Identity</span>
-                  <span className="ml-2 font-semibold">{pipeline.results.top_hit.identity_pct}%</span>
+          <div className="space-y-6">
+            {/* Top match banner */}
+            <div className="animate-fade-up bg-surface-0 rounded-2xl border border-surface-3/80 shadow-card overflow-hidden">
+              <div className="px-6 pt-5 pb-4 border-b border-surface-3/60">
+                <p className="text-2xs font-semibold text-accent-500 uppercase tracking-widest">Top Match</p>
+                <p className="text-[18px] font-semibold text-ink mt-1 tracking-[-0.01em] leading-snug">
+                  {pipeline.results.top_hit.description}
+                </p>
+              </div>
+              <div className="px-6 py-3 flex flex-wrap gap-x-8 gap-y-1 text-[13px]">
+                <div className="flex items-center gap-2">
+                  <span className="text-ink-tertiary">Identity</span>
+                  <span className="font-semibold text-ink">{pipeline.results.top_hit.identity_pct}%</span>
                 </div>
-                <div>
-                  <span className="text-teal-200">Coverage</span>
-                  <span className="ml-2 font-semibold">{pipeline.results.top_hit.coverage_pct}%</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-ink-tertiary">Coverage</span>
+                  <span className="font-semibold text-ink">{pipeline.results.top_hit.coverage_pct}%</span>
                 </div>
-                <div>
-                  <span className="text-teal-200">E-value</span>
-                  <span className="ml-2 font-semibold font-mono">
+                <div className="flex items-center gap-2">
+                  <span className="text-ink-tertiary">E-value</span>
+                  <span className="font-mono font-medium text-ink text-[12px]">
                     {pipeline.results.top_hit.e_value === 0
                       ? "0.0"
                       : pipeline.results.top_hit.e_value.toExponential(1)}
                   </span>
                 </div>
+                <div className="flex items-center gap-2 ml-auto">
+                  <span className="text-ink-tertiary">Duration</span>
+                  <span className="font-semibold text-ink">{pipeline.results.elapsed_seconds}s</span>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left column: tree + sequence */}
-              <div className="lg:col-span-2 space-y-6">
-                <div className="glass rounded-2xl p-6">
+            {/* Main grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Left: Tree + Sequence */}
+              <div className="lg:col-span-8 space-y-6">
+                <div className="animate-fade-up-d1 bg-surface-0 rounded-2xl border border-surface-3/80 shadow-card p-5">
                   <PhyloTree svg={pipeline.results.svg} />
                 </div>
 
-                <div className="glass rounded-2xl p-6">
+                <div className="animate-fade-up-d2 bg-surface-0 rounded-2xl border border-surface-3/80 shadow-card p-5">
                   <SequenceViewer
                     label="Consensus Sequence"
                     fasta={pipeline.results.consensus_fasta}
@@ -223,29 +228,25 @@ function App() {
                 </div>
               </div>
 
-              {/* Right column: hits + export */}
-              <div className="space-y-6">
-                <div className="glass rounded-2xl p-6">
+              {/* Right: Export + Info */}
+              <div className="lg:col-span-4 space-y-6">
+                <div className="animate-fade-up-d1 bg-surface-0 rounded-2xl border border-surface-3/80 shadow-card p-5">
                   <ExportPanel
                     newick={pipeline.results.newick}
                     svg={pipeline.results.svg}
                   />
                 </div>
 
-                <div className="glass rounded-2xl p-6">
-                  <div className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Run Info</div>
-                  <div className="space-y-2 text-sm">
+                <div className="animate-fade-up-d2 bg-surface-0 rounded-2xl border border-surface-3/80 shadow-card p-5">
+                  <p className="text-2xs font-semibold text-ink-tertiary uppercase tracking-widest mb-3">Run Details</p>
+                  <div className="space-y-2.5 text-[13px]">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Duration</span>
-                      <span className="font-medium text-gray-700">{pipeline.results.elapsed_seconds}s</span>
+                      <span className="text-ink-secondary">BLAST hits</span>
+                      <span className="font-medium text-ink">{pipeline.results.all_hits.length}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Hits</span>
-                      <span className="font-medium text-gray-700">{pipeline.results.all_hits.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Job ID</span>
-                      <span className="font-mono text-xs text-gray-400">{pipeline.results.job_id}</span>
+                      <span className="text-ink-secondary">Job ID</span>
+                      <span className="font-mono text-[11px] text-ink-tertiary">{pipeline.results.job_id}</span>
                     </div>
                   </div>
                 </div>
@@ -253,17 +254,12 @@ function App() {
             </div>
 
             {/* Full-width BLAST table */}
-            <div className="glass rounded-2xl p-6">
+            <div className="animate-fade-up-d3 bg-surface-0 rounded-2xl border border-surface-3/80 shadow-card p-5">
               <BlastResults hits={pipeline.results.all_hits} />
             </div>
           </div>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="mt-20 py-6 text-center text-xs text-gray-300">
-        Phylomatic &mdash; Automated phylogenetic inference from Sanger sequencing
-      </footer>
     </div>
   );
 }

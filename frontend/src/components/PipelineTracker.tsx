@@ -8,11 +8,11 @@ interface PipelineTrackerProps {
 
 const STAGES: { key: PipelineStage; label: string; desc: string }[] = [
   { key: "assembly", label: "Assembly", desc: "Building consensus from reads" },
-  { key: "blast", label: "BLAST Search", desc: "Querying NCBI nucleotide database" },
+  { key: "blast", label: "BLAST Search", desc: "Querying NCBI database" },
   { key: "entrez", label: "Reference Fetch", desc: "Downloading reference sequences" },
-  { key: "alignment", label: "Alignment", desc: "Multiple sequence alignment via Clustal Omega" },
+  { key: "alignment", label: "Alignment", desc: "Multiple sequence alignment" },
   { key: "tree", label: "Tree Construction", desc: "Building neighbor-joining tree" },
-  { key: "visualize", label: "Visualization", desc: "Rendering annotated SVG" },
+  { key: "visualize", label: "Visualization", desc: "Rendering annotated tree" },
 ];
 
 const STAGE_ORDER = STAGES.map((s) => s.key);
@@ -38,69 +38,65 @@ export default function PipelineTracker({
 }: PipelineTrackerProps) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="font-bold text-gray-900">Running Pipeline</h3>
-          <p className="text-sm text-gray-400 mt-0.5">This may take a few minutes</p>
+          <p className="text-[15px] font-semibold text-ink">Running pipeline</p>
+          <p className="text-[13px] text-ink-tertiary mt-0.5">This may take a few minutes</p>
         </div>
-        <div className="text-right">
-          <span className="text-2xl font-bold text-teal-600">{progress}%</span>
-        </div>
+        <span className="text-[22px] font-semibold text-ink tabular-nums">{progress}%</span>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full bg-gray-100 rounded-full h-1.5 mb-8 overflow-hidden">
+      <div className="w-full bg-surface-2 rounded-full h-1 mb-6 overflow-hidden">
         <div
-          className="bg-gradient-to-r from-teal-400 to-teal-600 h-full rounded-full transition-all duration-700 ease-out"
+          className="bg-accent-500 h-full rounded-full transition-all duration-700 ease-out relative"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-0.5">
         {STAGES.map(({ key, label, desc }) => {
           const status = getStatus(key, currentStage);
           return (
             <div
               key={key}
-              className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ${
-                status === "running" ? "bg-teal-50/50" : ""
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                status === "running" ? "bg-accent-50/50" : ""
               }`}
             >
-              {/* Status indicator */}
               <div className="flex-shrink-0">
                 {status === "done" ? (
-                  <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <div className="w-5 h-5 rounded-full bg-accent-500 flex items-center justify-center">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </div>
                 ) : status === "running" ? (
-                  <div className="w-6 h-6 rounded-full bg-teal-400 animate-pulse-ring flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-white" />
+                  <div className="w-5 h-5 rounded-full border-2 border-accent-500 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse-dot" />
                   </div>
                 ) : status === "error" ? (
-                  <div className="w-6 h-6 rounded-full bg-red-400 flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">!</span>
+                  <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
                   </div>
                 ) : (
-                  <div className="w-6 h-6 rounded-full border-2 border-gray-200" />
+                  <div className="w-5 h-5 rounded-full border border-surface-4" />
                 )}
               </div>
 
               <div className="flex-1 min-w-0">
-                <p
-                  className={`text-sm font-medium ${
-                    status === "done"
-                      ? "text-teal-700"
-                      : status === "running"
-                        ? "text-teal-600"
-                        : "text-gray-400"
-                  }`}
-                >
+                <p className={`text-[13px] font-medium ${
+                  status === "done" ? "text-ink" :
+                  status === "running" ? "text-accent-700" :
+                  "text-ink-faint"
+                }`}>
                   {label}
                 </p>
                 {status === "running" && (
-                  <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                  <p className="text-2xs text-ink-tertiary mt-0.5">{desc}</p>
                 )}
               </div>
             </div>
@@ -109,8 +105,8 @@ export default function PipelineTracker({
       </div>
 
       {message && (
-        <div className="mt-6 px-4 py-3 bg-gray-50 rounded-xl">
-          <p className="text-xs text-gray-500 font-mono">{message}</p>
+        <div className="mt-5 px-3 py-2.5 bg-surface-2/60 rounded-lg">
+          <p className="text-2xs text-ink-tertiary font-mono">{message}</p>
         </div>
       )}
     </div>

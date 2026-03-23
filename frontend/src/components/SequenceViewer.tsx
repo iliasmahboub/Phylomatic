@@ -6,11 +6,11 @@ interface SequenceViewerProps {
 }
 
 const BASE_COLORS: Record<string, string> = {
-  A: "text-green-600",
-  T: "text-red-500",
-  C: "text-blue-500",
-  G: "text-amber-600",
-  N: "text-gray-400",
+  A: "text-emerald-500",
+  T: "text-rose-500",
+  C: "text-sky-500",
+  G: "text-amber-500",
+  N: "text-ink-faint",
 };
 
 export default function SequenceViewer({ label, fasta }: SequenceViewerProps) {
@@ -24,21 +24,21 @@ export default function SequenceViewer({ label, fasta }: SequenceViewerProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-gray-800 text-sm">{label}</h3>
-        <span className="text-xs text-gray-400 font-mono">{sequence.length} bp</span>
+        <p className="text-[14px] font-semibold text-ink">{label}</p>
+        <span className="text-2xs text-ink-tertiary font-mono tabular-nums">{sequence.length} bp</span>
       </div>
 
-      <div className="text-xs text-gray-400 font-mono mb-2">{header}</div>
+      <p className="text-2xs text-ink-faint font-mono mb-2 truncate">{header}</p>
 
-      <div className="bg-gray-950 rounded-xl p-4 overflow-x-auto">
+      <div className="bg-[#0d1117] rounded-lg p-4 overflow-x-auto">
         <div className="seq-viewer">
           {displaySeq.split("").map((base, i) => (
-            <span key={i} className={BASE_COLORS[base] || "text-gray-400"}>
+            <span key={i} className={BASE_COLORS[base] || "text-ink-faint"}>
               {base}
             </span>
           ))}
           {!expanded && sequence.length > 300 && (
-            <span className="text-gray-500">...</span>
+            <span className="text-gray-600">...</span>
           )}
         </div>
       </div>
@@ -46,9 +46,9 @@ export default function SequenceViewer({ label, fasta }: SequenceViewerProps) {
       {sequence.length > 300 && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="mt-2 text-xs text-teal-600 hover:text-teal-700 font-medium"
+          className="mt-2 text-2xs text-accent-600 hover:text-accent-700 font-medium"
         >
-          {expanded ? "Show less" : `Show all ${sequence.length} bases`}
+          {expanded ? "Collapse" : `Show all ${sequence.length} bases`}
         </button>
       )}
     </div>

@@ -53,67 +53,64 @@ export default function DropZone({ onFilesReady, disabled }: DropZoneProps) {
     <div>
       <div
         {...getRootProps()}
-        className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-200 ${
+        className={`relative border border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
           disabled
-            ? "border-gray-200 bg-gray-50/50 cursor-not-allowed opacity-50"
+            ? "border-surface-3 bg-surface-1 cursor-not-allowed opacity-50"
             : isDragActive
-              ? "border-teal-400 bg-teal-50/50 scale-[1.01]"
-              : "border-gray-200 hover:border-teal-300 hover:bg-teal-50/20"
+              ? "border-accent-400 bg-accent-50/40"
+              : "border-surface-4 hover:border-accent-300 hover:bg-accent-50/20"
         }`}
       >
         <input {...getInputProps()} />
-        <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-teal-50 to-teal-100 flex items-center justify-center">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <div className="w-10 h-10 mx-auto mb-3 rounded-xl bg-surface-2 flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#536471" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
         </div>
         {isDragActive ? (
-          <p className="text-teal-600 font-medium">Drop your files here</p>
+          <p className="text-accent-600 text-[14px] font-medium">Drop files here</p>
         ) : (
           <>
-            <p className="text-gray-700 font-medium">
+            <p className="text-ink text-[14px] font-medium">
               Drop .ab1 chromatogram files
             </p>
-            <p className="text-gray-400 text-sm mt-1">
-              Forward + reverse reads &middot; 2 files required
+            <p className="text-ink-tertiary text-[13px] mt-0.5">
+              Forward + reverse reads
             </p>
           </>
         )}
       </div>
 
       {error && (
-        <p className="text-red-500 text-sm mt-3 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-          {error}
-        </p>
+        <p className="text-red-600 text-[13px] mt-2.5">{error}</p>
       )}
 
       {files.length > 0 && (
-        <div className="mt-4 space-y-2">
+        <div className="mt-3 space-y-2">
           {files.map((file, i) => (
             <div
               key={file.name}
-              className="flex items-center justify-between bg-white border border-gray-100 rounded-xl px-4 py-3 shadow-sm"
+              className="flex items-center justify-between bg-surface-1 border border-surface-3/60 rounded-lg px-3.5 py-2.5"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center">
-                  <span className="text-teal-600 text-xs font-bold">
-                    {i === 0 ? "F" : "R"}
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-md bg-accent-50 border border-accent-200/50 flex items-center justify-center">
+                  <span className="text-accent-600 text-2xs font-semibold">
+                    {i === 0 ? "FW" : "RV"}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-700">{file.name}</p>
-                  <p className="text-xs text-gray-400">{formatSize(file.size)}</p>
+                  <p className="text-[13px] font-medium text-ink leading-tight">{file.name}</p>
+                  <p className="text-2xs text-ink-tertiary">{formatSize(file.size)}</p>
                 </div>
               </div>
               {!disabled && (
                 <button
                   onClick={() => removeFile(i)}
-                  className="text-gray-300 hover:text-red-400 transition-colors"
+                  className="text-ink-faint hover:text-red-400 transition-colors p-1"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
@@ -122,8 +119,7 @@ export default function DropZone({ onFilesReady, disabled }: DropZoneProps) {
             </div>
           ))}
           {files.length < 2 && (
-            <p className="text-amber-500 text-xs flex items-center gap-1.5 pl-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <p className="text-amber-600 text-2xs font-medium pl-0.5">
               Waiting for {files.length === 0 ? "2 files" : "1 more file"}
             </p>
           )}
