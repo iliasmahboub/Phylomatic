@@ -1,6 +1,17 @@
+<div align="center">
+
 # Phylomatic
 
 **Automated phylogenetic inference from Sanger sequencing data.**
+
+Drop in raw `.ab1` chromatograms. Get back a publication-ready phylogenetic tree.
+
+[![CI](https://github.com/iliasmahboub/Phylomatic/actions/workflows/ci.yml/badge.svg)](https://github.com/iliasmahboub/Phylomatic/actions)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
+[![React 18](https://img.shields.io/badge/react-18-61dafb.svg)](https://react.dev/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+</div>
 
 ---
 
@@ -10,7 +21,7 @@ If you've done 16S identification from Sanger reads, you know the workflow: open
 
 For one sample, it's tedious. For twenty, it's a full afternoon. For a course where every student needs to do it, it's a guaranteed stream of "my BLAST timed out" and "MEGA won't open the file" emails.
 
-I built Phylomatic because I got tired of doing the same six manual steps every time I needed to identify a bacterial isolate. The entire pipeline — from raw chromatograms to a publication-ready phylogenetic tree — runs in a single click with no local tool installations beyond Python and Node.
+I built Phylomatic because I got tired of doing the same six manual steps every time I needed to identify a bacterial isolate. The entire pipeline, from raw chromatograms to a publication-ready phylogenetic tree, runs in a single click with no local tool installations beyond Python and Node.
 
 ---
 
@@ -21,17 +32,17 @@ I built Phylomatic because I got tired of doing the same six manual steps every 
   (2 files)      FASTA        NCBI       Entrez       Clustal   BioPython   Annotated
 ```
 
-1. **Assembly** — Reads forward and reverse `.ab1` chromatograms, quality-trims both ends at PHRED < 20, reverse-complements the reverse read, and builds a consensus sequence by taking the higher-quality base at each position.
+1. **Assembly** - Reads forward and reverse `.ab1` chromatograms, quality-trims both ends at PHRED < 20, reverse-complements the reverse read, and builds a consensus sequence by taking the higher-quality base at each position.
 
-2. **BLAST** — Submits the consensus to NCBI BLASTn. Supports multiple databases: 16S ribosomal RNA (filtered via Entrez query for proper species-level hits), the full nucleotide collection, RefSeq RNA, or ITS for fungal work. Returns the top 15 hits with identity, coverage, and E-values.
+2. **BLAST** - Submits the consensus to NCBI BLASTn. Supports multiple databases: 16S ribosomal RNA (filtered via Entrez query for proper species-level hits), the full nucleotide collection, RefSeq RNA, or ITS for fungal work. Returns the top 15 hits with identity, coverage, and E-values.
 
-3. **Reference Fetch** — Pulls FASTA sequences for the top hits via NCBI Entrez E-utilities. Filters out uncultured/environmental sequences automatically so the tree contains real species names, not "Uncultured bacterium clone."
+3. **Reference Fetch** - Pulls FASTA sequences for the top hits via NCBI Entrez E-utilities. Filters out uncultured/environmental sequences automatically so the tree contains real species names, not "Uncultured bacterium clone."
 
-4. **Alignment** — Submits the consensus plus references to the EBI Clustal Omega REST API for multiple sequence alignment.
+4. **Alignment** - Submits the consensus plus references to the EBI Clustal Omega REST API for multiple sequence alignment.
 
-5. **Tree Construction** — Builds a Neighbor-Joining tree from the alignment distance matrix using BioPython. Labels use genus + species names extracted from BLAST hit descriptions.
+5. **Tree Construction** - Builds a Neighbor-Joining tree from the alignment distance matrix using BioPython. Labels use genus + species names extracted from BLAST hit descriptions.
 
-6. **Visualization** — Renders the tree as an annotated SVG with the query sequence highlighted. Zoomable and pannable in the browser, exportable as SVG, PNG (2x), or Newick.
+6. **Visualization** - Renders the tree as an annotated SVG with the query sequence highlighted. Zoomable and pannable in the browser, exportable as SVG, PNG (2x), or Newick.
 
 ---
 
@@ -64,19 +75,36 @@ The whole process takes 2-5 minutes depending on NCBI and EBI response times.
 ## Architecture
 
 ```
-Frontend (React 18 + TypeScript + Vite + Tailwind)  :5173
-  DropZone  |  PipelineTracker  |  PhyloTree (zoom/pan)
-  BlastResults  |  SequenceViewer  |  ExportPanel
-                        |
-                   REST + WebSocket
-                        |
-Backend (FastAPI + BioPython + asyncio)  :8000
-  assembly -> blast -> entrez -> alignment -> tree -> visualize
-                        |
-          NCBI BLASTn  /  NCBI Entrez  /  EBI Clustal Omega
+┌─────────────────────────────────────────────────────────┐
+│  Frontend (React 18 + TypeScript + Vite + Tailwind)     │
+│  :5173                                                  │
+│  ┌──────────┐ ┌──────────────┐ ┌───────────────┐       │
+│  │ DropZone │ │ PipelineTrack│ │ PhyloTree     │       │
+│  │          │ │              │ │ (zoom/pan SVG)│       │
+│  └──────────┘ └──────────────┘ └───────────────┘       │
+│  ┌──────────────┐ ┌───────────┐ ┌──────────────┐       │
+│  │ BlastResults  │ │ SeqViewer │ │ ExportPanel  │       │
+│  └──────────────┘ └───────────┘ └──────────────┘       │
+└────────────────────────┬────────────────────────────────┘
+                         │ REST + WebSocket
+┌────────────────────────┴────────────────────────────────┐
+│  Backend (FastAPI + BioPython + asyncio)                 │
+│  :8000                                                  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐   │
+│  │ assembly │→│  blast   │→│  entrez  │→│alignment │   │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘   │
+│  ┌──────────┐ ┌──────────┐                              │
+│  │   tree   │→│visualize │                              │
+│  └──────────┘ └──────────┘                              │
+└─────────────────────────────────────────────────────────┘
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+   NCBI BLASTn    NCBI Entrez    EBI Clustal Omega
+   (URL API)      (E-utilities)  (REST API)
 ```
 
-The backend is a standard FastAPI application. Each pipeline stage is an independent module in `backend/app/pipeline/` — importable and runnable without the web layer. The frontend connects over WebSocket for real-time progress updates during the run.
+Each pipeline stage is an independent module in `backend/app/pipeline/`, importable and runnable without the web layer. The frontend connects over WebSocket for real-time progress updates during the run.
 
 ---
 
@@ -145,7 +173,7 @@ Starts the backend on `:8000` and frontend on `:5173`.
 
 | Variable | Required | Description |
 |---|---|---|
-| `NCBI_EMAIL` | Yes | Any email — NCBI requires it for API access, no signup |
+| `NCBI_EMAIL` | Yes | Any email, NCBI requires it for API access, no signup |
 | `FRONTEND_URL` | No | Frontend origin for CORS (defaults to `http://localhost:5173`) |
 
 ---
@@ -157,6 +185,6 @@ MIT
 ---
 
 **Ilias Mahboub**
-Molecular Biosciences — Duke University / Duke Kunshan University
+Molecular Biosciences, Duke University / Duke Kunshan University
 Research Trainee @ Dzirasa Lab (Duke SM) · Yuan Lab (SJTU-SM) · Remy Lab
 im132@duke.edu
