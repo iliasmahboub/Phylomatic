@@ -25,26 +25,43 @@ export default function BlastResults({ hits }: BlastResultsProps) {
     }
   };
 
-  const SortHeader = ({ label, sortKey }: { label: string; sortKey: SortKey }) => (
+  const SortHeader = ({
+    label,
+    sortKey,
+    className = "",
+  }: {
+    label: string;
+    sortKey: SortKey;
+    className?: string;
+  }) => (
     <th
-      className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
+      className={`px-4 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-600 transition-colors select-none ${className}`}
       onClick={() => toggleSort(sortKey)}
     >
-      {label} {sortBy === sortKey ? (ascending ? "↑" : "↓") : ""}
+      {label}
+      <span className="ml-1 text-gray-300">
+        {sortBy === sortKey ? (ascending ? "\u2191" : "\u2193") : ""}
+      </span>
     </th>
   );
 
+  const maxIdentity = Math.max(...hits.map((h) => h.identity_pct));
+
   return (
-    <div className="w-full">
-      <h3 className="font-semibold text-gray-800 mb-4">BLAST Results</h3>
-      <div className="overflow-x-auto rounded-xl border border-gray-200">
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-gray-800">BLAST Results</h3>
+        <span className="text-xs text-gray-400">{hits.length} hits</span>
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-gray-100">
         <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          <thead>
+            <tr className="bg-gray-50/80">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
                 Species
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
                 Accession
               </th>
               <SortHeader label="Identity" sortKey="identity_pct" />
@@ -52,51 +69,57 @@ export default function BlastResults({ hits }: BlastResultsProps) {
               <SortHeader label="E-value" sortKey="e_value" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
-            {sorted.map((hit, i) => (
-              <tr
-                key={hit.accession}
-                className={`hover:bg-gray-50 ${
-                  i === 0 && sortBy === "identity_pct" && !ascending
-                    ? "border-l-4 border-l-teal"
-                    : ""
-                }`}
-              >
-                <td className="px-4 py-3">
-                  <span className="text-sm text-gray-800">
-                    {hit.description.length > 60
-                      ? hit.description.slice(0, 60) + "..."
-                      : hit.description}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <code className="text-xs text-gray-500">{hit.accession}</code>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700 w-14">
-                      {hit.identity_pct}%
-                    </span>
-                    <div className="flex-1 bg-gray-200 rounded-full h-1.5 max-w-[80px]">
-                      <div
-                        className="bg-teal h-1.5 rounded-full"
-                        style={{ width: `${hit.identity_pct}%` }}
-                      />
+          <tbody className="divide-y divide-gray-50">
+            {sorted.map((hit) => {
+              const isTop = hit.identity_pct === maxIdentity;
+              return (
+                <tr
+                  key={hit.accession}
+                  className={`transition-colors hover:bg-gray-50/80 ${
+                    isTop ? "bg-teal-50/30" : ""
+                  }`}
+                >
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-2">
+                      {isTop && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-teal-500 flex-shrink-0" />
+                      )}
+                      <span className={`text-sm ${isTop ? "text-gray-900 font-medium" : "text-gray-600"}`}>
+                        {hit.description.length > 55
+                          ? hit.description.slice(0, 55) + "..."
+                          : hit.description}
+                      </span>
                     </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="text-sm text-gray-600">
-                    {hit.coverage_pct}%
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="text-sm text-gray-600 font-mono">
-                    {hit.e_value.toExponential(1)}
-                  </span>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <code className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
+                      {hit.accession}
+                    </code>
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <span className={`text-sm font-mono w-16 ${isTop ? "text-teal-700 font-semibold" : "text-gray-600"}`}>
+                        {hit.identity_pct}%
+                      </span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-1 max-w-[60px]">
+                        <div
+                          className={`h-full rounded-full ${isTop ? "bg-teal-500" : "bg-gray-300"}`}
+                          style={{ width: `${hit.identity_pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <span className="text-sm text-gray-500">{hit.coverage_pct}%</span>
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <span className="text-sm text-gray-400 font-mono">
+                      {hit.e_value === 0 ? "0.0" : hit.e_value.toExponential(1)}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
