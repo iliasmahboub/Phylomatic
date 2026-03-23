@@ -13,7 +13,7 @@
 ```bash
 git clone https://github.com/iliasmahboub/Phylomatic.git
 cd Phylomatic
-cp .env.example .env   # add your NCBI_EMAIL
+export NCBI_EMAIL=your@email.com
 pip install -r backend/requirements.txt
 ```
 
