@@ -26,7 +26,10 @@ async def _submit_alignment(
     }
 
     resp = await client.post(CLUSTALO_RUN_URL, data=data, timeout=60.0)
-    resp.raise_for_status()
+    if resp.status_code != 200:
+        raise RuntimeError(
+            f"Clustal Omega submission failed ({resp.status_code}): {resp.text}"
+        )
     job_id = resp.text.strip()
     return job_id
 

@@ -89,9 +89,10 @@ async def run_pipeline(job: JobState) -> None:
         if not hits:
             raise RuntimeError("No BLAST hits returned")
 
-        # 3. Entrez fetch
+        # 3. Entrez fetch (top 5 for alignment)
         _update(job, PipelineStage.ENTREZ, 50, "Fetching reference sequences...")
-        accessions = [h.accession for h in hits]
+        top_hits = hits[:5]
+        accessions = [h.accession for h in top_hits]
         ref_fastas = await fetch_sequences(accessions)
         _update(job, PipelineStage.ENTREZ, 60, f"Fetched {len(ref_fastas)} references")
 
@@ -102,10 +103,11 @@ async def run_pipeline(job: JobState) -> None:
         for rec in SeqIO.parse(StringIO(consensus_fasta), "fasta"):
             sequences["Query"] = str(rec.seq)
             break
-        # Parse each reference FASTA
+        # Parse each reference FASTA — use clean alphanumeric labels
         for acc, fasta_str in ref_fastas.items():
             for rec in SeqIO.parse(StringIO(fasta_str), "fasta"):
-                sequences[acc] = str(rec.seq)
+                clean_label = acc.replace(".", "_").replace("|", "_")
+                sequences[clean_label] = str(rec.seq)
                 break
 
         aligned_fasta = await align_sequences(sequences)
