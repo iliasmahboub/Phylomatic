@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+import { Check, X, Loader2 } from "lucide-react";
 import type { PipelineStage } from "../types";
 
 interface PipelineTrackerProps {
@@ -31,6 +33,35 @@ function getStatus(
   return "waiting";
 }
 
+function StageIcon({ status }: { status: ReturnType<typeof getStatus> }) {
+  if (status === "done") {
+    return (
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        className="w-5 h-5 rounded-full bg-accent flex items-center justify-center"
+      >
+        <Check size={11} className="text-surface-void" strokeWidth={3} />
+      </motion.div>
+    );
+  }
+  if (status === "running") {
+    return (
+      <div className="w-5 h-5 rounded-full border-2 border-accent flex items-center justify-center">
+        <Loader2 size={11} className="text-accent animate-spin" />
+      </div>
+    );
+  }
+  if (status === "error") {
+    return (
+      <div className="w-5 h-5 rounded-full bg-danger flex items-center justify-center">
+        <X size={11} className="text-surface-void" strokeWidth={3} />
+      </div>
+    );
+  }
+  return <div className="w-5 h-5 rounded-full border border-ink-faint/40" />;
+}
+
 export default function PipelineTracker({
   currentStage,
   message,
@@ -43,14 +74,16 @@ export default function PipelineTracker({
           <p className="text-[15px] font-semibold text-ink">Running pipeline</p>
           <p className="text-[13px] text-ink-tertiary mt-0.5">This may take a few minutes</p>
         </div>
-        <span className="text-[22px] font-semibold text-ink tabular-nums">{progress}%</span>
+        <span className="text-2xl font-semibold text-ink tabular-nums">{progress}%</span>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full bg-surface-2 rounded-full h-1 mb-6 overflow-hidden">
-        <div
-          className="bg-accent-500 h-full rounded-full transition-all duration-700 ease-out relative"
-          style={{ width: `${progress}%` }}
+      <div className="w-full bg-surface-elevated rounded-full h-1 mb-6 overflow-hidden">
+        <motion.div
+          className="bg-accent h-full rounded-full shadow-glow"
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         />
       </div>
 
@@ -61,42 +94,26 @@ export default function PipelineTracker({
             <div
               key={key}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                status === "running" ? "bg-accent-50/50" : ""
+                status === "running" ? "bg-accent-subtle" : ""
               }`}
             >
-              <div className="flex-shrink-0">
-                {status === "done" ? (
-                  <div className="w-5 h-5 rounded-full bg-accent-500 flex items-center justify-center">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                ) : status === "running" ? (
-                  <div className="w-5 h-5 rounded-full border-2 border-accent-500 flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse-dot" />
-                  </div>
-                ) : status === "error" ? (
-                  <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="w-5 h-5 rounded-full border border-surface-4" />
-                )}
-              </div>
-
+              <StageIcon status={status} />
               <div className="flex-1 min-w-0">
-                <p className={`text-[13px] font-medium ${
+                <p className={`text-[13px] font-medium transition-colors ${
                   status === "done" ? "text-ink" :
-                  status === "running" ? "text-accent-700" :
+                  status === "running" ? "text-accent" :
                   "text-ink-faint"
                 }`}>
                   {label}
                 </p>
                 {status === "running" && (
-                  <p className="text-2xs text-ink-tertiary mt-0.5">{desc}</p>
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-2xs text-ink-tertiary mt-0.5"
+                  >
+                    {desc}
+                  </motion.p>
                 )}
               </div>
             </div>
@@ -105,7 +122,7 @@ export default function PipelineTracker({
       </div>
 
       {message && (
-        <div className="mt-5 px-3 py-2.5 bg-surface-2/60 rounded-lg">
+        <div className="mt-5 px-3 py-2.5 bg-surface-base rounded-lg border border-ghost">
           <p className="text-2xs text-ink-tertiary font-mono">{message}</p>
         </div>
       )}

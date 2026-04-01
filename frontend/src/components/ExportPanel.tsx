@@ -1,3 +1,5 @@
+import { Download } from "lucide-react";
+
 interface ExportPanelProps {
   newick: string;
   svg: string;
@@ -19,9 +21,7 @@ function downloadPNG(svgString: string) {
   if (!ctx) return;
 
   const img = new Image();
-  const svgBlob = new Blob([svgString], {
-    type: "image/svg+xml;charset=utf-8",
-  });
+  const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svgBlob);
 
   img.onload = () => {
@@ -61,23 +61,19 @@ export default function ExportPanel({ newick, svg }: ExportPanelProps) {
 
   return (
     <div>
-      <p className="text-2xs font-semibold text-ink-tertiary uppercase tracking-widest mb-3">Export</p>
+      <p className="text-2xs font-semibold text-ink-tertiary uppercase tracking-[0.12em] mb-3">Export</p>
       <div className="space-y-1.5">
         {EXPORTS.map((exp, i) => (
           <button
             key={exp.label}
             onClick={handlers[i]}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 bg-surface-0 border border-surface-3/60 rounded-lg hover:border-accent-300 hover:bg-accent-50/30 transition-all group text-left"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 bg-surface-base border border-ghost rounded-lg hover:border-accent/30 hover:bg-accent-subtle transition-all group text-left"
           >
-            <div className="w-8 h-8 rounded-md bg-surface-2 group-hover:bg-accent-100 flex items-center justify-center transition-colors">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#536471" strokeWidth="1.5" strokeLinecap="round" className="group-hover:stroke-accent-600 transition-colors">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
+            <div className="w-8 h-8 rounded-md bg-surface-elevated group-hover:bg-accent-dim flex items-center justify-center transition-colors">
+              <Download size={14} className="text-ink-tertiary group-hover:text-accent transition-colors" />
             </div>
             <div className="flex-1">
-              <p className="text-[13px] font-medium text-ink group-hover:text-accent-700 transition-colors">
+              <p className="text-[13px] font-medium text-ink group-hover:text-accent transition-colors">
                 {exp.label}
               </p>
               <p className="text-2xs text-ink-tertiary">{exp.desc}</p>

@@ -14,3 +14,4 @@ frontend/dist/
 !docs/*.png
 venv/
 .venv/
+IMPROVEMENTS.md
