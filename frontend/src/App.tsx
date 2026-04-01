@@ -225,7 +225,7 @@ function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   <div className="lg:col-span-8 space-y-6">
                     <motion.div {...stagger(1)} className="bg-surface-raised rounded-2xl border border-ghost p-5">
-                      <PhyloTree svg={pipeline.results.svg} />
+                      <PhyloTree newick={pipeline.results.newick} />
                     </motion.div>
                     <motion.div {...stagger(2)} className="bg-surface-raised rounded-2xl border border-ghost p-5">
                       <SequenceViewer
