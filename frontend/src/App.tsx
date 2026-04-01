@@ -8,6 +8,7 @@ import BlastResults from "./components/BlastResults";
 import PhyloTree from "./components/PhyloTree";
 import ExportPanel from "./components/ExportPanel";
 import SequenceViewer from "./components/SequenceViewer";
+import ProteinViewer from "./components/ProteinViewer";
 
 const DB_OPTIONS = [
   { value: "16S_ribosomal_RNA", label: "16S Ribosomal RNA", hint: "Bacterial species identification" },
@@ -243,6 +244,9 @@ function App() {
                       />
                     </motion.div>
                     <motion.div {...stagger(2)} className="bg-surface-raised rounded-2xl border border-ghost p-5">
+                      <ProteinViewer jobId={pipeline.results.job_id} />
+                    </motion.div>
+                    <motion.div {...stagger(3)} className="bg-surface-raised rounded-2xl border border-ghost p-5">
                       <p className="text-2xs font-semibold text-ink-tertiary uppercase tracking-[0.12em] mb-3">
                         Run Details
                       </p>
@@ -261,7 +265,7 @@ function App() {
                 </div>
 
                 {/* BLAST table */}
-                <motion.div {...stagger(3)} className="bg-surface-raised rounded-2xl border border-ghost p-5">
+                <motion.div {...stagger(4)} className="bg-surface-raised rounded-2xl border border-ghost p-5">
                   <BlastResults hits={pipeline.results.all_hits} />
                 </motion.div>
               </div>

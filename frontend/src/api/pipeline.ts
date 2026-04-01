@@ -22,3 +22,14 @@ export async function getResults(jobId: string) {
   if (!res.ok) throw new Error(`Failed to fetch results: ${res.statusText}`);
   return res.json();
 }
+
+export async function predictStructure(
+  jobId: string
+): Promise<{ protein_sequence: string; pdb: string }> {
+  const res = await fetch(`${API_BASE}/structure/${jobId}`, { method: "POST" });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `Structure prediction failed: ${res.statusText}`);
+  }
+  return res.json();
+}

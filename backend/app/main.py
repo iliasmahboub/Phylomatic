@@ -23,6 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.jobs import jobs, create_job, run_pipeline as execute_pipeline, PipelineStage
 from app.models import PipelineResult
+from app.pipeline.structure import predict_structure
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent.parent / ".env")
 logger = logging.getLogger(__name__)
@@ -124,6 +125,26 @@ async def websocket_endpoint(websocket: WebSocket, job_id: str) -> None:
         await websocket.close()
     except WebSocketDisconnect:
         pass
+
+
+@app.post("/api/structure/{job_id}")
+async def get_structure(job_id: str) -> dict:
+    job = jobs.get(job_id)
+    if not job:
+        raise HTTPException(404, "Job not found")
+    if job.stage != PipelineStage.COMPLETE:
+        raise HTTPException(400, "Pipeline not complete")
+
+    consensus = job.result.get("consensus_fasta", "")
+    if not consensus:
+        raise HTTPException(400, "No consensus sequence available")
+
+    try:
+        result = await predict_structure(consensus)
+        return result
+    except Exception as exc:
+        logger.exception("Structure prediction failed")
+        raise HTTPException(502, str(exc)) from exc
 
 
 @app.delete("/api/job/{job_id}")
