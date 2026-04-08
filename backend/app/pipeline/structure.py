@@ -7,7 +7,11 @@ import httpx
 
 
 def _find_longest_orf(dna: str) -> str:
-    """Find the longest open reading frame across all six reading frames."""
+    """Find the longest open reading frame across all six reading frames.
+
+    Each strand is translated in three frames; the longest segment between
+    stop codons is returned as an amino-acid string.
+    """
     seq = Seq(dna)
     best = ""
 

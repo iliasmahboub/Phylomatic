@@ -4,6 +4,8 @@ from pydantic import BaseModel
 
 
 class RunRequest(BaseModel):
+    """Input parameters for a new pipeline run."""
+
     ncbi_email: str
 
     model_config = {
@@ -12,6 +14,8 @@ class RunRequest(BaseModel):
 
 
 class BlastHitSchema(BaseModel):
+    """Schema for a single BLAST hit returned to the frontend."""
+
     accession: str
     description: str
     identity_pct: float
@@ -20,6 +24,8 @@ class BlastHitSchema(BaseModel):
 
 
 class PipelineResult(BaseModel):
+    """Complete pipeline output: hits, sequences, tree, and SVG."""
+
     job_id: str
     top_hit: BlastHitSchema
     all_hits: list[BlastHitSchema]

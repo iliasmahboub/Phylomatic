@@ -83,8 +83,15 @@ async def _submit_blast(
     raise RuntimeError("BLAST submission failed")
 
 
-async def _poll_blast(client: httpx.AsyncClient, rid: str, email: str) -> str:
-    """Poll for BLAST results until ready, return XML string."""
+async def _poll_blast(
+    client: httpx.AsyncClient, rid: str, email: str, max_attempts: int = 120
+) -> str:
+    """Poll for BLAST results until ready, return XML string.
+
+    Polls every ``POLL_INTERVAL_S`` seconds, up to ``max_attempts`` times
+    (default 120, i.e. ~20 minutes).  Raises ``RuntimeError`` on failure,
+    expiry, or timeout.
+    """
     params = {
         "CMD": "Get",
         "FORMAT_TYPE": "XML",
@@ -92,7 +99,7 @@ async def _poll_blast(client: httpx.AsyncClient, rid: str, email: str) -> str:
         "email": email,
     }
 
-    while True:
+    for _ in range(max_attempts):
         await asyncio.sleep(POLL_INTERVAL_S)
         resp = await client.get(BLAST_URL, params=params, timeout=60.0)
         resp.raise_for_status()
@@ -106,6 +113,8 @@ async def _poll_blast(client: httpx.AsyncClient, rid: str, email: str) -> str:
             raise RuntimeError(f"BLAST job {rid} expired or unknown")
         if "BlastOutput" in text:
             return text
+
+    raise RuntimeError(f"BLAST job {rid} timed out after {max_attempts} poll attempts")
 
 
 def _parse_blast_xml(xml_text: str, query_length: int) -> list[BlastHit]:
@@ -158,7 +167,29 @@ async def blast_search(
     hitlist_size: int = DEFAULT_HITLIST_SIZE,
     database: str = "16S_ribosomal_RNA",
 ) -> list[BlastHit]:
-    """Run a full BLASTn search: submit, poll, parse."""
+    """Run a full BLASTn search: submit, poll, parse.
+
+    Parameters
+    ----------
+    fasta : str
+        FASTA-formatted query sequence.
+    hitlist_size : int
+        Maximum number of hits to return (default 15).
+    database : str
+        BLAST database key (see ``DB_CONFIG``).
+
+    Returns
+    -------
+    list[BlastHit]
+        Parsed hits sorted by BLAST rank, truncated to *hitlist_size*.
+
+    Raises
+    ------
+    ValueError
+        If ``NCBI_EMAIL`` is not set.
+    RuntimeError
+        If submission or polling fails after retries.
+    """
     email = os.environ.get("NCBI_EMAIL", "")
     if not email:
         raise ValueError("NCBI_EMAIL environment variable must be set")

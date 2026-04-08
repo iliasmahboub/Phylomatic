@@ -45,6 +45,7 @@ async def run_pipeline(
     ncbi_email: str = Form(...),
     blast_db: str = Form("16S_ribosomal_RNA"),
 ) -> dict[str, str]:
+    """Accept forward and reverse .ab1 files, start the pipeline asynchronously."""
     try:
         tmp = tempfile.mkdtemp()
         fwd_name = fwd.filename or "forward.ab1"
@@ -67,6 +68,7 @@ async def run_pipeline(
 
 @app.get("/api/status/{job_id}")
 async def get_status(job_id: str) -> dict:
+    """Return the current pipeline stage, progress, and elapsed time."""
     job = jobs.get(job_id)
     if not job:
         raise HTTPException(404, "Job not found")
@@ -80,6 +82,7 @@ async def get_status(job_id: str) -> dict:
 
 @app.get("/api/results/{job_id}")
 async def get_results(job_id: str) -> PipelineResult:
+    """Return full pipeline results once the job is complete."""
     job = jobs.get(job_id)
     if not job:
         raise HTTPException(404, "Job not found")
@@ -90,6 +93,7 @@ async def get_results(job_id: str) -> PipelineResult:
 
 @app.websocket("/ws/{job_id}")
 async def websocket_endpoint(websocket: WebSocket, job_id: str) -> None:
+    """Stream stage-update events to the frontend until the job finishes."""
     await websocket.accept()
     job = jobs.get(job_id)
     if not job:
@@ -129,6 +133,7 @@ async def websocket_endpoint(websocket: WebSocket, job_id: str) -> None:
 
 @app.post("/api/structure/{job_id}")
 async def get_structure(job_id: str) -> dict:
+    """Translate consensus to protein and predict 3D structure via ESMFold."""
     job = jobs.get(job_id)
     if not job:
         raise HTTPException(404, "Job not found")
@@ -149,6 +154,7 @@ async def get_structure(job_id: str) -> dict:
 
 @app.delete("/api/job/{job_id}")
 async def delete_job(job_id: str) -> dict[str, str]:
+    """Remove a job and its associated data from memory."""
     if job_id in jobs:
         del jobs[job_id]
     return {"status": "deleted"}

@@ -15,11 +15,33 @@ BATCH_SIZE = 5
 BATCH_DELAY_S = 1.0
 
 
-async def fetch_sequences(accessions: list[str]) -> dict[str, str]:
-    """
-    Fetch FASTA sequences for a list of accessions from NCBI Entrez.
+async def fetch_sequences(
+    accessions: list[str], max_retries: int = 3
+) -> dict[str, str]:
+    """Fetch FASTA sequences for a list of accessions from NCBI Entrez.
 
-    Returns a dict mapping accession → FASTA sequence string.
+    Accessions are fetched in batches of ``BATCH_SIZE`` with a delay between
+    batches to respect NCBI rate limits.  Each batch is retried up to
+    ``max_retries`` times with exponential back-off.
+
+    Parameters
+    ----------
+    accessions : list[str]
+        NCBI nucleotide accession numbers.
+    max_retries : int
+        Maximum retry attempts per batch (default 3).
+
+    Returns
+    -------
+    dict[str, str]
+        Mapping of accession (without version suffix) to FASTA string.
+
+    Raises
+    ------
+    ValueError
+        If ``NCBI_EMAIL`` is not set.
+    RuntimeError
+        If a batch fails after all retries.
     """
     email = os.environ.get("NCBI_EMAIL", "")
     if not email:
@@ -40,13 +62,22 @@ async def fetch_sequences(accessions: list[str]) -> dict[str, str]:
                 "email": email,
             }
 
-            resp = await client.get(EFETCH_URL, params=params, timeout=30.0)
-            resp.raise_for_status()
+            for attempt in range(max_retries):
+                try:
+                    resp = await client.get(EFETCH_URL, params=params, timeout=30.0)
+                    resp.raise_for_status()
+                    break
+                except httpx.HTTPError as exc:
+                    if attempt == max_retries - 1:
+                        raise RuntimeError(
+                            f"Entrez fetch failed for {batch} after "
+                            f"{max_retries} retries: {exc}"
+                        ) from exc
+                    await asyncio.sleep(2 ** (attempt + 1))
 
             # Parse multi-FASTA response
             fasta_io = StringIO(resp.text)
             for record in SeqIO.parse(fasta_io, "fasta"):
-                # Match accession from the record id
                 acc = record.id.split(".")[0]
                 out = StringIO()
                 SeqIO.write(record, out, "fasta")
