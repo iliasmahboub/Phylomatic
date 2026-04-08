@@ -9,7 +9,7 @@ tags:
   - multiple sequence alignment
 authors:
   - name: Ilias Mahboub
-    orcid: 0000-0000-0000-0000
+    orcid: 0009-0003-4518-6953
     affiliation: 1
 affiliations:
   - name: Department of Molecular Biosciences, Duke University / Duke Kunshan University, USA
