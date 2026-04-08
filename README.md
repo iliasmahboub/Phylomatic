@@ -15,13 +15,13 @@ Drop in raw `.ab1` chromatograms. Get back a publication-ready phylogenetic tree
 
 ---
 
-## Why this exists
+## Why Phylomatic?
 
-If you've done 16S identification from Sanger reads, you know the workflow: open your `.ab1` files in FinchTV, manually trim the low-quality ends, copy the sequence into BLAST, wait, copy the accession numbers, fetch references from Entrez one by one, paste everything into Clustal Omega, wait again, download the alignment, load it into MEGA, build a tree, export it, annotate it in Illustrator.
+If you've done 16S identification from Sanger reads, you know what the process looks like: open your `.ab1` files in FinchTV, trim the low-quality ends by hand, copy the sequence into BLAST, wait, grab the accession numbers, fetch references from Entrez one by one, paste everything into Clustal Omega, wait again, download the alignment, load it into MEGA, build a tree, export it, annotate it.
 
-For one sample, it's tedious. For twenty, it's a full afternoon. For a course where every student needs to do it, it's a guaranteed stream of "my BLAST timed out" and "MEGA won't open the file" emails.
+For one sample that's just tedious. For twenty samples it eats an entire afternoon. For a class where every student needs to do it, it's a guaranteed stream of "my BLAST timed out" and "MEGA won't open the file" emails.
 
-I built Phylomatic because I got tired of doing the same six manual steps every time I needed to identify a bacterial isolate. The entire pipeline, from raw chromatograms to a publication-ready phylogenetic tree, runs in a single click.
+Phylomatic runs the whole thing in a single click.
 
 <div align="center">
 <img src="docs/screenshot-results.png" alt="Phylomatic results view showing phylogenetic tree, top match, and export options" width="100%" />
@@ -31,28 +31,28 @@ I built Phylomatic because I got tired of doing the same six manual steps every 
 
 ---
 
-## What it does
+## The pipeline
 
 ```
 .ab1 reads ──> Consensus ──> BLASTn ──> References ──> MSA ──> NJ Tree ──> SVG
   (2 files)      FASTA        NCBI       Entrez       Clustal   BioPython   Annotated
 ```
 
-1. **Assembly** - Reads forward and reverse `.ab1` chromatograms, quality-trims both ends at PHRED < 20, reverse-complements the reverse read, and builds a consensus sequence by taking the higher-quality base at each position.
+1. **Assembly** -- reads forward and reverse `.ab1` chromatograms, quality-trims both ends at PHRED < 20, reverse-complements the reverse read, and builds a consensus by picking the higher-quality base at each position.
 
-2. **BLAST** - Submits the consensus to NCBI BLASTn. Supports multiple databases: 16S ribosomal RNA (filtered via Entrez query for proper species-level hits), the full nucleotide collection, RefSeq RNA, or ITS for fungal work. Returns the top 15 hits with identity, coverage, and E-values.
+2. **BLAST** -- submits the consensus to NCBI BLASTn. Supports multiple databases: 16S ribosomal RNA (filtered for proper species-level hits), the full nucleotide collection, RefSeq RNA, or ITS for fungal work. Returns the top 15 hits with identity, coverage, and E-values.
 
-3. **Reference Fetch** - Pulls FASTA sequences for the top hits via NCBI Entrez E-utilities. Filters out uncultured/environmental sequences automatically so the tree contains real species names, not "Uncultured bacterium clone."
+3. **Reference fetch** -- pulls FASTA sequences for the top hits via NCBI Entrez E-utilities. Uncultured and environmental sequences are filtered out automatically so the tree shows real species names.
 
-4. **Alignment** - Submits the consensus plus references to the EBI Clustal Omega REST API for multiple sequence alignment.
+4. **Alignment** -- submits the consensus plus references to the EBI Clustal Omega REST API for multiple sequence alignment.
 
-5. **Tree Construction** - Builds a Neighbor-Joining tree from the alignment distance matrix using BioPython. Labels use genus + species names extracted from BLAST hit descriptions.
+5. **Tree construction** -- builds a Neighbor-Joining tree from the alignment distance matrix using BioPython. Labels use genus + species names extracted from BLAST hit descriptions.
 
-6. **Visualization** - Renders the tree as an annotated SVG with the query sequence highlighted. Zoomable and pannable in the browser, exportable as SVG, PNG (2x), or Newick.
+6. **Visualization** -- renders the tree as an annotated SVG with the query sequence highlighted. Zoomable and pannable in the browser. Exportable as SVG, PNG (2x), or Newick.
 
 ---
 
-## Quick Start
+## Quick start
 
 ```bash
 git clone https://github.com/iliasmahboub/Phylomatic.git
@@ -64,7 +64,7 @@ cd frontend && npm install && cd ..
 npm run dev
 ```
 
-Open **http://localhost:5173**, drop your `.ab1` files, and click **Run pipeline**. The app asks for your email at runtime (NCBI requires one for API access, no signup needed). The whole process takes 2-5 minutes depending on NCBI/EBI response times.
+Open **http://localhost:5173**, drop your `.ab1` files, and click **Run pipeline**. The app asks for your email at runtime (NCBI requires one for API access, no signup needed). The whole process takes 2-5 minutes depending on NCBI and EBI response times.
 
 ---
 
@@ -100,13 +100,13 @@ Open **http://localhost:5173**, drop your `.ab1` files, and click **Run pipeline
    (URL API)      (E-utilities)  (REST API)
 ```
 
-Each pipeline stage is an independent module in `backend/app/pipeline/`, importable and runnable without the web layer. The frontend connects over WebSocket for real-time progress updates.
+Each pipeline stage is an independent module in `backend/app/pipeline/`. They can be imported and tested without the web layer. The frontend connects over WebSocket for real-time progress.
 
 ---
 
 ## Running modules standalone
 
-Each step works independently from the command line:
+Each step works on its own from the command line:
 
 ```bash
 cd backend
@@ -160,6 +160,22 @@ Unit tests cover assembly, BLAST XML parsing, and tree construction. All externa
 ```bash
 docker compose up
 ```
+
+---
+
+## How it works (for non-bioinformaticians)
+
+When scientists find an unknown bacterium, they need to figure out what species it is. One common approach is to sequence a specific gene (the 16S ribosomal RNA gene) that all bacteria have but that varies enough between species to tell them apart. Sanger sequencing reads the gene from both directions, producing two `.ab1` chromatogram files that record the raw signal from the sequencer.
+
+Phylomatic takes those two files and:
+- Cleans up the noisy ends of each read and merges them into one clean sequence
+- Searches the NCBI database for the most similar known sequences
+- Downloads those reference sequences
+- Lines them all up (alignment) to see exactly where they differ
+- Builds a family tree showing how closely related the unknown bacterium is to each known species
+- Draws that tree in the browser so it can be examined, zoomed, and exported
+
+The result is a phylogenetic tree: a branching diagram where closely related species sit near each other and the branch lengths reflect how much their DNA differs.
 
 ---
 

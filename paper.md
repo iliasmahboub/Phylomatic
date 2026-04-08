@@ -20,93 +20,123 @@ bibliography: paper.bib
 
 # Summary
 
-Phylomatic is an open-source pipeline that automates the complete workflow of
-species identification from Sanger sequencing data.  Given a pair of forward
-and reverse `.ab1` chromatogram files, Phylomatic performs quality trimming,
-consensus assembly, NCBI BLASTn homology search, reference sequence retrieval,
-Clustal Omega multiple-sequence alignment, Neighbor-Joining tree construction,
-and interactive visualization — producing a publication-ready annotated
-phylogenetic tree with no manual intervention.
+Phylomatic is an open-source pipeline that automates species identification
+from Sanger sequencing data. Users provide a pair of forward and reverse `.ab1`
+chromatogram files and receive a publication-ready phylogenetic tree without any
+manual steps in between. The pipeline handles quality trimming, consensus
+assembly, NCBI BLASTn homology search, reference sequence retrieval, Clustal
+Omega multiple-sequence alignment, Neighbor-Joining tree construction
+[@saitou_neighbor_1987], and interactive visualization.
 
-The tool is implemented as a full-stack web application with a Python/FastAPI
-backend and a React/TypeScript frontend, connected by WebSocket for real-time
-progress reporting.  Each pipeline stage is also independently usable from the
-command line, making individual modules reusable in scripted workflows.
+The software is built as a web application with a Python/FastAPI backend and a
+React/TypeScript frontend connected by WebSocket for real-time progress updates.
+Each pipeline stage also works as a standalone command-line module, so
+individual steps can be reused in scripted workflows.
 
 # Statement of Need
 
-Sanger sequencing remains the standard method for bacterial and fungal species
-identification in microbiology teaching and clinical laboratories, typically
-through amplification and sequencing of marker genes such as the 16S ribosomal
-RNA gene or the internal transcribed spacer (ITS) region
-[@clarridge_impact_2004; @schoch_nuclear_2012].  The conventional workflow
-requires researchers to manually execute a series of steps using multiple
-disconnected tools: inspecting chromatograms in FinchTV or Chromas, trimming
-low-quality bases, submitting sequences to NCBI BLAST [@altschul_basic_1990],
-retrieving reference sequences through Entrez [@sayers_database_2022],
-performing alignment with Clustal Omega [@sievers_fast_2011], constructing
-phylogenetic trees in MEGA [@tamura_mega11_2021] or similar software, and
-finally annotating the tree for publication.
+Sanger sequencing remains the workhorse for bacterial and fungal species
+identification in microbiology teaching labs and clinical settings. The typical
+approach involves amplifying a marker gene such as the 16S ribosomal RNA gene
+or the internal transcribed spacer (ITS) region, then sequencing it
+[@clarridge_impact_2004; @schoch_nuclear_2012]. What follows is a manual,
+multi-tool workflow: inspect chromatograms in FinchTV or Chromas, trim
+low-quality bases by hand, paste the sequence into NCBI BLAST
+[@altschul_basic_1990], copy accession numbers from the results, fetch
+references one by one through Entrez [@sayers_database_2022], align everything
+in Clustal Omega [@sievers_fast_2011], build a tree in MEGA
+[@tamura_mega11_2021], and annotate it for publication.
 
-Each transition between tools introduces friction: format conversions, manual
-copy-paste of sequences and accession numbers, and repeated polling of web
-services.  For a single sample this is tedious; for classroom settings where
-every student must complete the workflow independently, it generates a
-predictable stream of troubleshooting requests.
+Each transition between tools means format conversions, manual copy-paste, and
+repeated polling of web services. For a single sample this is slow but
+manageable. For classroom settings where every student runs the same workflow
+independently, it produces a steady stream of troubleshooting requests around
+timeouts, file formats, and software incompatibilities.
 
-Phylomatic eliminates these manual handoffs by chaining all six stages into a
-single automated pipeline.  Its web interface requires only two inputs — a
-pair of `.ab1` files and an email address for NCBI API access — and delivers
-results in minutes.  Unlike Galaxy-based pipelines [@afgan_galaxy_2018] that
-require server deployment and workflow configuration, or command-line tools
-like QIIME 2 [@bolyen_reproducible_2019] designed for amplicon survey data,
-Phylomatic is purpose-built for the single-isolate Sanger identification use
-case that most undergraduate microbiology labs actually perform.
+Phylomatic removes these manual handoffs by chaining all six stages into one
+automated pipeline. The web interface asks for two inputs (a pair of `.ab1`
+files and an email address for NCBI API access) and delivers results in
+minutes.
 
-# Implementation
+# State of the Field
 
-Phylomatic's backend consists of six Python modules, each implementing one
-pipeline stage:
+Several tools address parts of this workflow but none cover the full path from
+raw chromatograms to an annotated tree in a single step. Galaxy
+[@afgan_galaxy_2018] can chain bioinformatics tools into pipelines, but
+requires server deployment, workflow configuration, and familiarity with its
+interface. QIIME 2 [@bolyen_reproducible_2019] targets high-throughput amplicon
+survey data from Illumina runs, not the single-isolate Sanger identification
+that most undergraduate labs perform. MEGA [@tamura_mega11_2021] handles
+alignment and tree construction well but does not read `.ab1` files directly or
+run BLAST searches. Tools like FinchTV and Chromas are limited to chromatogram
+viewing and basic trimming.
 
-- **Assembly** (`assembly.py`): reads `.ab1` chromatograms via BioPython
-  [@cock_biopython_2009], quality-trims both ends at a PHRED score threshold
-  of 20, reverse-complements the reverse read, and generates a consensus
-  sequence by selecting the higher-quality base at each aligned position.
+Phylomatic fills this gap. It accepts raw `.ab1` input, handles all external
+API interactions (NCBI BLAST, NCBI Entrez, EBI Clustal Omega), and produces a
+zoomable, exportable tree in the browser. Because each module is independently
+importable and testable, researchers who need only part of the pipeline (for
+instance, just the BLAST-to-tree portion) can use those modules on their own.
 
-- **BLAST** (`blast.py`): submits the consensus to the NCBI BLAST URL API with
-  configurable database selection (16S rRNA, ITS, full nucleotide, RefSeq RNA),
-  polls for results with exponential back-off, and parses the XML response into
-  structured hit objects.
+# Software Design
 
-- **Entrez** (`entrez.py`): retrieves FASTA reference sequences for top BLAST
-  hits via NCBI E-utilities, fetching in batches to respect rate limits.
+The backend consists of six Python modules in `backend/app/pipeline/`, each
+responsible for one stage of the workflow.
 
-- **Alignment** (`alignment.py`): submits the consensus plus reference
-  sequences to the EBI Clustal Omega REST API for multiple-sequence alignment.
+The **assembly** module reads `.ab1` chromatograms through BioPython
+[@cock_biopython_2009], trims low-quality bases from both ends at a PHRED score
+threshold of 20, reverse-complements the reverse read, and builds a consensus
+by choosing the higher-quality base at each position.
 
-- **Tree** (`tree.py`): computes a pairwise identity distance matrix and
-  constructs a Neighbor-Joining tree using BioPython's
-  `DistanceTreeConstructor`, outputting Newick format.
+The **BLAST** module submits the consensus to the NCBI BLAST URL API. It
+supports several databases (16S rRNA, ITS, full nucleotide collection, RefSeq
+RNA), handles polling with exponential back-off and a hard timeout, and parses
+the XML response into structured hit objects.
 
-- **Visualization** (`visualize.py`): renders the tree as an annotated SVG
-  with the query sequence highlighted in a distinct color, using Matplotlib's
-  SVG backend.
+The **Entrez** module fetches FASTA reference sequences for the top BLAST hits
+through NCBI E-utilities, batching requests and retrying with back-off to
+respect NCBI rate limits.
 
-All external service communication uses asynchronous HTTP via `httpx`, and the
-FastAPI layer exposes a WebSocket endpoint that streams stage-update events to
-the React frontend in real time.  The frontend provides drag-and-drop file
-upload, a live progress tracker, an interactive zoomable tree viewer, a
-sortable BLAST results table, and export to Newick, SVG, or PNG formats.
+The **alignment** module sends the consensus plus all reference sequences to
+the EBI Clustal Omega REST API [@sievers_fast_2011] for multiple-sequence
+alignment.
 
-An optional seventh module (`structure.py`) translates the consensus DNA to
-protein and predicts a 3D structure via the ESMFold API [@lin_evolutionary_2023],
-viewable in a 3D viewer.
+The **tree** module computes a pairwise identity distance matrix and builds a
+Neighbor-Joining tree [@saitou_neighbor_1987] using BioPython's
+`DistanceTreeConstructor`, writing the result in Newick format.
 
-# Availability
+The **visualization** module renders the tree as an annotated SVG using
+Matplotlib [@hunter_matplotlib_2007], with the query node highlighted for
+identification.
 
-Phylomatic is available under the MIT license at
-[https://github.com/iliasmahboub/Phylomatic](https://github.com/iliasmahboub/Phylomatic).
-Documentation, installation instructions, and test data are included in the
-repository.
+All external HTTP communication is asynchronous via `httpx`. The FastAPI layer
+exposes a WebSocket endpoint that streams stage updates to the React frontend
+in real time. The frontend provides drag-and-drop upload, a live progress
+tracker, an interactive tree viewer with zoom and pan, a sortable BLAST hit
+table, and export to Newick, SVG, or PNG.
+
+An optional seventh module translates the consensus DNA to protein and predicts
+a 3D structure through the ESMFold API [@lin_evolutionary_2023].
+
+# Research Impact
+
+Phylomatic was designed for two audiences: undergraduate microbiology courses
+where students identify bacterial isolates as part of laboratory exercises, and
+small research labs that perform routine Sanger-based species identification
+but lack the bioinformatics infrastructure for a fully automated workflow. By
+collapsing a multi-tool, multi-hour process into a single browser interaction,
+Phylomatic makes phylogenetic analysis accessible to users who may not have
+command-line experience.
+
+# AI Usage Disclosure
+
+GitHub Copilot and Claude were used for code autocompletion and initial
+drafting during development. All generated code was reviewed, tested, and
+validated by the author. The scientific content, architecture decisions, and
+research framing are entirely the author's work.
+
+# Acknowledgements
+
+The author thanks the NCBI, EBI, and the BioPython community for maintaining
+the public APIs and libraries that Phylomatic depends on.
 
 # References
