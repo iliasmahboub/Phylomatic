@@ -23,12 +23,23 @@ class BlastHitSchema(BaseModel):
     e_value: float
 
 
+class ConfidenceSchema(BaseModel):
+    """Confidence assessment for the species identification."""
+
+    level: str  # HIGH, MODERATE, LOW
+    identity_gap: float
+    genus_consensus: float
+    top_genus: str
+    reason: str
+
+
 class PipelineResult(BaseModel):
     """Complete pipeline output: hits, sequences, tree, and SVG."""
 
     job_id: str
     top_hit: BlastHitSchema
     all_hits: list[BlastHitSchema]
+    confidence: ConfidenceSchema
     consensus_fasta: str
     aligned_fasta: str
     newick: str

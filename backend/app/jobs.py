@@ -18,6 +18,7 @@ from app.pipeline.entrez import fetch_sequences
 from app.pipeline.alignment import align_sequences
 from app.pipeline.tree import build_tree
 from app.pipeline.visualize import render_tree
+from app.pipeline.confidence import compute_confidence
 
 
 class PipelineStage(StrEnum):
@@ -193,6 +194,9 @@ async def run_pipeline(job: JobState) -> None:
         svg = render_tree(newick, top_hit)
         _update(job, PipelineStage.VISUALIZE, 98, "Visualization complete")
 
+        # Confidence scoring
+        confidence = compute_confidence(hits)
+
         # Store result
         job.result = _build_result(
             job,
@@ -202,6 +206,13 @@ async def run_pipeline(job: JobState) -> None:
                 "identity_pct": top_hit.identity_pct,
                 "coverage_pct": top_hit.coverage_pct,
                 "e_value": top_hit.e_value,
+            },
+            confidence={
+                "level": confidence.level,
+                "identity_gap": confidence.identity_gap,
+                "genus_consensus": confidence.genus_consensus,
+                "top_genus": confidence.top_genus,
+                "reason": confidence.reason,
             },
             all_hits=[
                 {

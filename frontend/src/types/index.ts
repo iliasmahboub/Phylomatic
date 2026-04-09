@@ -6,10 +6,19 @@ export interface BlastHit {
   e_value: number;
 }
 
+export interface Confidence {
+  level: "HIGH" | "MODERATE" | "LOW";
+  identity_gap: number;
+  genus_consensus: number;
+  top_genus: string;
+  reason: string;
+}
+
 export interface PipelineResult {
   job_id: string;
   top_hit: BlastHit;
   all_hits: BlastHit[];
+  confidence: Confidence;
   consensus_fasta: string;
   aligned_fasta: string;
   newick: string;

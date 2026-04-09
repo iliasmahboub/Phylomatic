@@ -201,11 +201,17 @@ function App() {
                 {/* Top match banner */}
                 <motion.div {...stagger(0)} className="bg-surface-raised rounded-2xl border border-ghost overflow-hidden">
                   <div className="px-6 pt-5 pb-4 border-b border-ghost">
-                    <p className="text-2xs font-semibold text-accent uppercase tracking-[0.12em]">
-                      Top Match
-                    </p>
+                    <div className="flex items-center gap-2.5">
+                      <p className="text-2xs font-semibold text-accent uppercase tracking-[0.12em]">
+                        Top Match
+                      </p>
+                      <ConfidenceBadge level={pipeline.results.confidence.level} />
+                    </div>
                     <p className="text-lg font-semibold text-ink mt-1 tracking-tight leading-snug">
                       {pipeline.results.top_hit.description}
+                    </p>
+                    <p className="text-2xs text-ink-tertiary mt-1.5 leading-relaxed">
+                      {pipeline.results.confidence.reason}
                     </p>
                   </div>
                   <div className="px-6 py-3 flex flex-wrap gap-x-8 gap-y-1 text-[13px]">
@@ -216,6 +222,7 @@ function App() {
                       value={pipeline.results.top_hit.e_value === 0 ? "0.0" : pipeline.results.top_hit.e_value.toExponential(1)}
                       mono
                     />
+                    <Stat label="Gap" value={`${pipeline.results.confidence.identity_gap}%`} />
                     <div className="ml-auto">
                       <Stat label="Duration" value={`${pipeline.results.elapsed_seconds}s`} />
                     </div>
@@ -274,6 +281,22 @@ function App() {
         </AnimatePresence>
       </main>
     </div>
+  );
+}
+
+const CONFIDENCE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  HIGH: { bg: "bg-accent-subtle", text: "text-accent", label: "High confidence" },
+  MODERATE: { bg: "bg-warning-dim", text: "text-warning", label: "Moderate confidence" },
+  LOW: { bg: "bg-danger-dim", text: "text-danger", label: "Low confidence" },
+};
+
+function ConfidenceBadge({ level }: { level: string }) {
+  const style = CONFIDENCE_STYLES[level] ?? CONFIDENCE_STYLES.LOW;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-semibold ${style.bg} ${style.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${level === "HIGH" ? "bg-accent" : level === "MODERATE" ? "bg-warning" : "bg-danger"}`} />
+      {style.label}
+    </span>
   );
 }
 
