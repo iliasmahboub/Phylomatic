@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Dna, RotateCcw } from "lucide-react";
+import { Dna, RotateCcw, AlertTriangle } from "lucide-react";
 import { usePipeline } from "./hooks/usePipeline";
 import DropZone from "./components/DropZone";
 import PipelineTracker from "./components/PipelineTracker";
@@ -228,6 +228,23 @@ function App() {
                     </div>
                   </div>
                 </motion.div>
+
+                {/* QC warnings */}
+                {pipeline.results.qc_warnings.length > 0 && (
+                  <motion.div {...stagger(0.5)} className="bg-surface-raised rounded-2xl border border-warning-dim p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle size={14} className="text-warning" />
+                      <p className="text-[13px] font-semibold text-warning">Quality Warnings</p>
+                    </div>
+                    <ul className="space-y-1">
+                      {pipeline.results.qc_warnings.map((w, i) => (
+                        <li key={i} className="text-[13px] text-ink-secondary leading-relaxed">
+                          {w.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
 
                 {/* Main grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

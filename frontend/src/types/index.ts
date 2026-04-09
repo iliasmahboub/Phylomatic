@@ -6,6 +6,12 @@ export interface BlastHit {
   e_value: number;
 }
 
+export interface QCWarning {
+  code: string;
+  severity: "warning" | "error";
+  message: string;
+}
+
 export interface Confidence {
   level: "HIGH" | "MODERATE" | "LOW";
   identity_gap: number;
@@ -19,6 +25,7 @@ export interface PipelineResult {
   top_hit: BlastHit;
   all_hits: BlastHit[];
   confidence: Confidence;
+  qc_warnings: QCWarning[];
   consensus_fasta: string;
   aligned_fasta: string;
   newick: string;

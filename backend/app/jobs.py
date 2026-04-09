@@ -19,6 +19,7 @@ from app.pipeline.alignment import align_sequences
 from app.pipeline.tree import build_tree
 from app.pipeline.visualize import render_tree
 from app.pipeline.confidence import compute_confidence
+from app.pipeline.qc import check_consensus_quality
 
 
 class PipelineStage(StrEnum):
@@ -157,6 +158,17 @@ async def run_pipeline(job: JobState) -> None:
         consensus_fasta = assemble(job.fwd_path, job.rev_path)
         _update(job, PipelineStage.ASSEMBLY, 15, "Assembly complete")
 
+        # 1b. Quality checks
+        qc = check_consensus_quality(consensus_fasta, job.fwd_path, job.rev_path)
+        if qc.warnings:
+            warning_msgs = "; ".join(w.message for w in qc.warnings)
+            _update(job, PipelineStage.ASSEMBLY, 16, f"QC warnings: {warning_msgs}")
+        if not qc.passed:
+            raise RuntimeError(
+                "Quality check failed: "
+                + "; ".join(w.message for w in qc.warnings if w.severity == "error")
+            )
+
         # 2. BLAST
         _update(job, PipelineStage.BLAST, 20, "Submitting BLAST search...")
         hits = await blast_search(consensus_fasta, database=job.blast_db)
@@ -214,6 +226,10 @@ async def run_pipeline(job: JobState) -> None:
                 "top_genus": confidence.top_genus,
                 "reason": confidence.reason,
             },
+            qc_warnings=[
+                {"code": w.code, "severity": w.severity, "message": w.message}
+                for w in qc.warnings
+            ],
             all_hits=[
                 {
                     "accession": h.accession,

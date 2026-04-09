@@ -23,6 +23,14 @@ class BlastHitSchema(BaseModel):
     e_value: float
 
 
+class QCWarningSchema(BaseModel):
+    """A single quality control warning."""
+
+    code: str
+    severity: str
+    message: str
+
+
 class ConfidenceSchema(BaseModel):
     """Confidence assessment for the species identification."""
 
@@ -40,6 +48,7 @@ class PipelineResult(BaseModel):
     top_hit: BlastHitSchema
     all_hits: list[BlastHitSchema]
     confidence: ConfidenceSchema
+    qc_warnings: list[QCWarningSchema] = []
     consensus_fasta: str
     aligned_fasta: str
     newick: str
