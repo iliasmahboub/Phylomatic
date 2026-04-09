@@ -23,7 +23,7 @@ This alone turns the paper from "we built a tool" into "we built and validated a
 
 ---
 
-## 2. Species-level confidence scoring
+## 2. Species-level confidence scoring [DONE]
 
 BLAST identity alone doesn't tell you how trustworthy the identification is. Two scenarios feel very different:
 
@@ -41,7 +41,7 @@ This is genuinely useful, easy to implement, and nobody does it automatically fo
 
 ---
 
-## 3. Smarter consensus assembly
+## 3. Smarter consensus assembly [DONE]
 
 The current approach picks the higher-quality base at each position, assuming the reads are already aligned from position 0. That's what people do by hand and it has two problems:
 
@@ -60,7 +60,7 @@ Benchmark: compare the old and new assembly on the validation dataset. Show fewe
 
 ---
 
-## 4. Contamination and quality checks
+## 4. Contamination and quality checks [DONE]
 
 Before burning 3 minutes on BLAST, catch bad samples early:
 
@@ -72,7 +72,7 @@ Display warnings in the UI before the pipeline runs. Let the user decide whether
 
 ---
 
-## 5. ML tree option
+## 5. ML tree option [DONE]
 
 Neighbor-Joining is fast but not the method most reviewers would choose for a publication figure. Add FastTree as an optional tree method:
 
@@ -95,13 +95,13 @@ def build_ml_tree(aligned_fasta: str) -> str:
 
 ---
 
-## 6. Expand test coverage
+## 6. Expand test coverage [PARTIAL]
 
 JOSS reviewers check tests. Current state: 3 test files, all mocked. Needed:
 
 - **Integration test with real `.ab1` files**: include a small pair of real chromatograms in `tests/sample_data/` and mark the test as `@pytest.mark.integration`
-- **Entrez module tests**: currently zero. Add tests for batch splitting, retry logic, and response parsing with mocked HTTP
-- **Alignment module tests**: currently zero. Add tests for multi-FASTA construction, poll timeout handling, and the "Query must be in output" validation
+- **Entrez module tests**: ~~currently zero.~~ Done (5 tests): batch splitting, retry logic, response parsing with mocked HTTP
+- **Alignment module tests**: ~~currently zero.~~ Done (5 tests): multi-FASTA construction, Query-first ordering, job failure, validation
 - **End-to-end pipeline test**: mock all external APIs, run the full `jobs.run_pipeline()`, and verify the result dict has all expected keys
 
 Target: every module has at least 3 tests (assembly and blast already do, tree has 4).
