@@ -49,7 +49,7 @@ class TestBuildConsensus:
         fwd_q = [30, 30, 10, 30]
         rev = "AAGC"
         rev_q = [20, 20, 30, 20]
-        cons = _build_consensus(fwd, fwd_q, rev, rev_q)
+        cons, stats = _build_consensus(fwd, fwd_q, rev, rev_q)
         assert len(cons) == 4
         # Position 2: fwd='T' q=10, rev='G' q=30 → pick rev 'G'
         assert cons[2] == "G"
@@ -59,16 +59,17 @@ class TestBuildConsensus:
         fwd_q = [30, 30, 30, 30]
         rev = "AAGC"
         rev_q = [30, 30, 30, 30]
-        cons = _build_consensus(fwd, fwd_q, rev, rev_q)
-        # Equal quality → forward base wins
-        assert cons[2] == "T"
+        cons, stats = _build_consensus(fwd, fwd_q, rev, rev_q)
+        # Equal quality but within ambiguity threshold → N
+        # (new weighted consensus marks disagreeing bases with close quality as N)
+        assert cons[2] == "N"
 
     def test_different_lengths(self) -> None:
         fwd = "AATCGG"
         fwd_q = [30, 30, 30, 30, 30, 30]
         rev = "AAGC"
         rev_q = [20, 20, 20, 20]
-        cons = _build_consensus(fwd, fwd_q, rev, rev_q)
+        cons, stats = _build_consensus(fwd, fwd_q, rev, rev_q)
         assert len(cons) == 6
 
 
