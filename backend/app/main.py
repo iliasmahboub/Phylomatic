@@ -24,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.jobs import jobs, create_job, run_pipeline as execute_pipeline, PipelineStage
 from app.models import PipelineResult
 from app.pipeline.structure import predict_structure
+from app.pipeline.tree import fasttree_available
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent.parent / ".env")
 logger = logging.getLogger(__name__)
@@ -44,6 +45,7 @@ async def run_pipeline(
     rev: UploadFile = File(...),
     ncbi_email: str = Form(...),
     blast_db: str = Form("16S_ribosomal_RNA"),
+    tree_method: str = Form("nj"),
 ) -> dict[str, str]:
     """Accept forward and reverse .ab1 files, start the pipeline asynchronously."""
     try:
@@ -58,7 +60,7 @@ async def run_pipeline(
         with open(rev_path, "wb") as f:
             f.write(await rev.read())
 
-        job = create_job(fwd_path, rev_path, ncbi_email, blast_db)
+        job = create_job(fwd_path, rev_path, ncbi_email, blast_db, tree_method)
         asyncio.create_task(execute_pipeline(job))
         return {"job_id": job.job_id}
     except Exception as exc:
@@ -150,6 +152,12 @@ async def get_structure(job_id: str) -> dict:
     except Exception as exc:
         logger.exception("Structure prediction failed")
         raise HTTPException(502, str(exc)) from exc
+
+
+@app.get("/api/capabilities")
+async def get_capabilities() -> dict:
+    """Return server capabilities (e.g. FastTree availability)."""
+    return {"fasttree_available": fasttree_available()}
 
 
 @app.delete("/api/job/{job_id}")

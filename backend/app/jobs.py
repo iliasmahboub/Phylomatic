@@ -46,6 +46,7 @@ class JobState:
     rev_path: str = ""
     ncbi_email: str = ""
     blast_db: str = "16S_ribosomal_RNA"
+    tree_method: str = "nj"
 
 
 # In-memory job storage
@@ -53,7 +54,11 @@ jobs: dict[str, JobState] = {}
 
 
 def create_job(
-    fwd_path: str, rev_path: str, ncbi_email: str, blast_db: str = "16S_ribosomal_RNA"
+    fwd_path: str,
+    rev_path: str,
+    ncbi_email: str,
+    blast_db: str = "16S_ribosomal_RNA",
+    tree_method: str = "nj",
 ) -> JobState:
     """Create a new pipeline job and register it in the global store."""
     job_id = uuid.uuid4().hex[:12]
@@ -63,6 +68,7 @@ def create_job(
         rev_path=rev_path,
         ncbi_email=ncbi_email,
         blast_db=blast_db,
+        tree_method=tree_method,
     )
     jobs[job_id] = job
     return job
@@ -197,7 +203,7 @@ async def run_pipeline(job: JobState) -> None:
 
         # 5. Tree
         _update(job, PipelineStage.TREE, 80, "Building phylogenetic tree...")
-        newick = build_tree(aligned_fasta)
+        newick = build_tree(aligned_fasta, method=job.tree_method)
         _update(job, PipelineStage.TREE, 88, "Tree construction complete")
 
         # 6. Visualize

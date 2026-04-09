@@ -23,11 +23,11 @@ export function usePipeline() {
 
   const wsRef = useRef<WebSocket | null>(null);
 
-  const run = useCallback(async (fwd: File, rev: File, email: string, blastDb: string = "16S_ribosomal_RNA") => {
+  const run = useCallback(async (fwd: File, rev: File, email: string, blastDb: string = "16S_ribosomal_RNA", treeMethod: string = "nj") => {
     setState((s) => ({ ...s, status: "running", error: null }));
 
     try {
-      const { job_id } = await startPipeline(fwd, rev, email, blastDb);
+      const { job_id } = await startPipeline(fwd, rev, email, blastDb, treeMethod);
 
       const wsBase = import.meta.env.DEV
         ? "ws://localhost:8000"

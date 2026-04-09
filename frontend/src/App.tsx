@@ -33,6 +33,7 @@ function stagger(i: number) {
 function App() {
   const [email, setEmail] = useState("");
   const [blastDb, setBlastDb] = useState("16S_ribosomal_RNA");
+  const [treeMethod, setTreeMethod] = useState("nj");
   const [files, setFiles] = useState<{ fwd: File; rev: File } | null>(null);
   const pipeline = usePipeline();
 
@@ -42,7 +43,7 @@ function App() {
 
   const handleRun = () => {
     if (!files || !email) return;
-    pipeline.run(files.fwd, files.rev, email, blastDb);
+    pipeline.run(files.fwd, files.rev, email, blastDb, treeMethod);
   };
 
   const handleReset = () => {
@@ -131,6 +132,41 @@ function App() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-[13px] font-medium text-ink-secondary mb-1.5">
+                    Tree Method
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTreeMethod("nj")}
+                      className={`flex-1 h-10 px-3 rounded-lg text-[13px] font-medium border transition-all ${
+                        treeMethod === "nj"
+                          ? "border-accent bg-accent-subtle text-accent"
+                          : "border-ghost bg-surface-base text-ink-secondary hover:text-ink"
+                      }`}
+                    >
+                      NJ (fast)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTreeMethod("ml")}
+                      className={`flex-1 h-10 px-3 rounded-lg text-[13px] font-medium border transition-all ${
+                        treeMethod === "ml"
+                          ? "border-accent bg-accent-subtle text-accent"
+                          : "border-ghost bg-surface-base text-ink-secondary hover:text-ink"
+                      }`}
+                    >
+                      ML (recommended)
+                    </button>
+                  </div>
+                  <p className="text-2xs text-ink-tertiary mt-1">
+                    {treeMethod === "ml"
+                      ? "Maximum likelihood via FastTree. Slower but better for publications."
+                      : "Neighbor-Joining. Fast, suitable for exploratory analysis."}
+                  </p>
                 </div>
 
                 <button
