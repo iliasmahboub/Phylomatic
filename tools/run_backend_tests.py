@@ -12,14 +12,14 @@ def main() -> int:
     env = os.environ.copy()
     env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
 
+    paths = sys.argv[1:] or ["backend/tests/"]
     cmd = [
         sys.executable,
         "-m",
         "pytest",
         "-p",
         "pytest_asyncio.plugin",
-        "backend/tests/",
-        *sys.argv[1:],
+        *paths,
     ]
     return subprocess.call(cmd, env=env)
 
