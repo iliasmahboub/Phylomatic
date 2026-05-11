@@ -108,8 +108,8 @@ def check_consensus_quality(
                 code="short_read",
                 severity="error",
                 message=(
-                    f"Consensus is only {seq_len} bp, below the {MIN_CONSENSUS_LENGTH} bp "
-                    f"minimum for reliable identification."
+                    f"Consensus is only {seq_len} bp, below the "
+                    f"{MIN_CONSENSUS_LENGTH} bp minimum for reliable identification."
                 ),
             )
         )

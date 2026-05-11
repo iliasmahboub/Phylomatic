@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phylomatic"
+version = "0.1.0"
+description = "Automated phylogenetic inference from Sanger sequencing chromatograms."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Ilias Mahboub", email = "ilyasmahboub6@gmail.com" }
+]
+keywords = ["bioinformatics", "phylogenetics", "Sanger sequencing", "BLAST"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: FastAPI",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+  "biopython>=1.83",
+  "fastapi>=0.109.0",
+  "uvicorn[standard]>=0.27.0",
+  "websockets>=12.0",
+  "httpx>=0.27.0",
+  "python-multipart>=0.0.6",
+  "pydantic>=2.5.0",
+  "python-dotenv>=1.0.0",
+  "matplotlib>=3.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "black>=24.1.0",
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.23.0",
+  "pytest-httpx>=0.30.0",
+  "ruff>=0.2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/iliasmahboub/Phylomatic"
+Repository = "https://github.com/iliasmahboub/Phylomatic"
+Issues = "https://github.com/iliasmahboub/Phylomatic/issues"
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+include = ["app*"]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F"]
