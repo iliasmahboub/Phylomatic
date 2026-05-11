@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use Phylomatic in research or teaching, please cite it using this metadata."
+title: "Phylomatic: automated phylogenetic inference from Sanger sequencing chromatograms"
+version: 0.1.0
+date-released: 2026-04-09
+authors:
+  - family-names: Mahboub
+    given-names: Ilias
+    orcid: "https://orcid.org/0009-0003-4518-6953"
+repository-code: "https://github.com/iliasmahboub/Phylomatic"
+license: MIT
+keywords:
+  - bioinformatics
+  - phylogenetics
+  - Sanger sequencing
+  - BLAST
+  - multiple sequence alignment
