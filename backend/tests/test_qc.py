@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.pipeline.qc import check_consensus_quality, MIN_CONSENSUS_LENGTH
+from app.pipeline.qc import check_consensus_quality
 
 
 def _make_fasta(seq: str) -> str:

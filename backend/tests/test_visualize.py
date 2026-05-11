@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.pipeline.blast import BlastHit
 from app.pipeline.visualize import render_tree
 
